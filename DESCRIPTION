@@ -1,0 +1,27 @@
+Package: RRembo
+Type: Package
+Title: Random EMbedding Bayesian Optimization for R
+Version: 0.1
+Author: Mickael Binois
+Maintainer: Mickael Binois <mbinois@chicagobooth.edu>
+Description: Implementation of the Random EMbedding Bayesian Optimization method with several improvements. Those include domain selection as well as warped kernels.
+License: LGPL-3
+Imports: 
+  DiceKriging,
+  DiceOptim,
+  GPareto,
+  far,
+  testthat,
+  quadprog,
+  linprog,
+  MASS,
+  numDeriv,
+  pso,
+  lhs,
+  DEoptim,
+  OOR,
+  rgenoud,
+  eaf
+Suggests:
+  rgl
+RoxygenNote: 6.0.1
