@@ -21,7 +21,7 @@ Imports:
   DEoptim,
   OOR,
   rgenoud,
-  eaf
+  eaf (>= 1.9)
 Suggests:
   rgl
 RoxygenNote: 6.0.1
