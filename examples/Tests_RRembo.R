@@ -1,15 +1,16 @@
 library("doParallel")
 library("foreach")
 
-nCores <- detectCores() - 1
+nCores <- detectCores()
 cl <-  makeCluster(nCores)
 registerDoParallel(cl)
-library(RemboIV)
+library(RRembo)
 library(DiceKriging)
 
 set.seed(42)
+save_intermediate <- TRUE
+case <- 3
 
-case <- 2
 if(case == 1){
   d <- 6
   D <- 50
@@ -37,7 +38,7 @@ if(case == 2){
   budget <- 100
   lower <- rep(0, D)
   upper <- rep(1, D)
-  popsize <- 40
+  popsize <- 80
   covtype <- "matern3_2"
   roll <- T
   
@@ -53,17 +54,42 @@ if(case == 2){
   
 }
 
+if(case == 3){
+  d <- 6
+  D <- 17
+  budget <- 250
+  nrep <- 25
+  lower <- rep(0, D)
+  upper <- rep(1, D)
+  popsize <- 40
+  covtype <- "matern5_2"
+  roll <- T
+  
+  cola_mod <- function(x, ii = NULL){
+    if(is.null(dim(x))) x <- matrix(x, 1)
+    return(apply(x, 1, cola))
+  } 
+  
+  ftest <- cola_mod
+  
+  # To ensure fairness among runs
+  mat_effective <-  NULL # matrix of effective variables (for D)
+
+  fstar <- 11.7464
+  
+}
+
 
 cat('RO \n')
 # Random optimization in the high-dimensional space
-res_RO <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_RO <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- min(ftest(matrix(runif(D*budget), budget), ii = mat_effective[i,]))
 }
 
 cat('REMBO standard \n')
 # Standard REMBO-like method
-res_standard_kY <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_standard_kY <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                ii = mat_effective[i,],
@@ -72,9 +98,11 @@ res_standard_kY <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .c
   res$value
 }
 
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
+
 cat('REMBO standard k_X \n')
 # Standard REMBO-like method
-res_standard_kX <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_standard_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                 ii = mat_effective[i,],
@@ -83,9 +111,11 @@ res_standard_kX <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .c
   res$value
 }
 
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
+
 cat('REMBO standard k_Psi \n')
 # Standard REMBO-like method
-res_standard_kPsi <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_standard_kPsi <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                 ii = mat_effective[i,],
@@ -94,8 +124,10 @@ res_standard_kPsi <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), 
   res$value
 }
 
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
+
 cat('REMBO reverse + A Gaussian + Psi \n')
-res_reverse_G_kPsi <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_reverse_G_kPsi <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                 ii = mat_effective[i,],
@@ -104,8 +136,10 @@ res_reverse_G_kPsi <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"),
   res$value
 }
 
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
+
 cat('REMBO reverse + A Gaussian + kY \n')
-res_reverse_G_kY <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_reverse_G_kY <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                 ii = mat_effective[i,],
@@ -114,10 +148,10 @@ res_reverse_G_kY <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .
   res$value
 }
 
-
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
 
 cat('REMBO reverse + Gaussian + kX \n')
-res_reverse_G_kX <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .combine = 'c') %dopar% {
+res_reverse_G_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'c') %dopar% {
   set.seed(i)
   res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                 ii = mat_effective[i,],
@@ -125,6 +159,8 @@ res_reverse_G_kX <- foreach(i=1:nrep, .packages = c("RemboIV", "DiceKriging"), .
                                inneroptim = "StoSOO", covtype = covtype, roll = roll))
   res$value
 }
+
+if(save_intermediate) save.image(paste("Wksp_RRembo_case", case, ".RData"))
 
 stopCluster(cl)
 
