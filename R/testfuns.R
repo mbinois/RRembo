@@ -139,5 +139,31 @@ giunta <- function(x, ii = NULL){
   return(0.6 + rowSums(tmp))
 }
 
-
-
+##' Levy function (nD)
+##' @title Levy function
+##' @export
+##' @examples 
+##' # Levy function
+##' xstar <- rep(0.55, 10)
+##' levy(xstar) # 0
+##' 
+##' @details Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
+##' and available at https://www.sfu.ca/~ssurjano/levy.html.
+levy <- function(x, ii = NULL){
+  if(is.null(dim(x))) x <- matrix(x, nrow = 1)
+  if(is.null(ii)) ii <- 1:ncol(x)
+  
+  x <- x * 20 - 10
+  
+  d <- ncol(x)
+  w <- 1 + (x[,ii, drop = F] - 1)/4
+  
+  term1 <- (sin(pi*w[,1]))^2 
+  term3 <- (w[,d]-1)^2 * (1+1*(sin(2*pi*w[,d]))^2)
+  
+  wi <- w[,1:(d-1), drop = F]
+  sum <- rowSums((wi-1)^2 * (1+10*(sin(pi*wi+1))^2))
+  
+  y <- term1 + sum + term3
+  return(y)
+}

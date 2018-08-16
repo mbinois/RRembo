@@ -4,8 +4,8 @@
 \alias{selectA}
 \title{Select a random embedding matrix}
 \usage{
-selectA(d, D, type = "isotropic", control = list(n = 30, maxit = 100, maxit2
-  = 10))
+selectA(d, D, type = "isotropic", control = list(n = 30, maxit = 100,
+  maxit2 = 10))
 }
 \arguments{
 \item{d}{small dimension}

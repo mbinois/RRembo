@@ -5,11 +5,11 @@
 \title{Random Embedding Bayesian Optimization}
 \usage{
 multiREMBO(par, fn, lower, upper, budget, ..., critcontrol = NULL,
-  control = list(Atype = "isotropic", reverse = TRUE, Amat = NULL, bxsize =
-  NULL, testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn = FALSE,
-  warping = "Psi", covtype = "matern5_2", covreestim = TRUE, designtype =
-  "unif", tcheckP = 1e-05, roll = F, initdesigns = NULL, iso = T, inneroptim =
-  "pso", popsize = 80, gen = 40))
+  control = list(Atype = "isotropic", reverse = TRUE, Amat = NULL, bxsize
+  = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn =
+  FALSE, warping = "Psi", covtype = "matern5_2", covreestim = TRUE,
+  designtype = "unif", tcheckP = 1e-05, roll = F, initdesigns = NULL, iso =
+  T, inneroptim = "pso", popsize = 80, gen = 40))
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}

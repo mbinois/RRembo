@@ -33,12 +33,6 @@ Test functions adapted for the Rembo problem, i.e., possibly with non-active var
 Implemented functions:\cr
 Sphere function (Euclidean distance to given optimum) (nD)
 
-Branin function (2D)
-
-Hartman6 function (6D)
-
-Hartman6 function (Jones version, 6D)
-
 Cola function (17D)
 
 Giunta function (nD)
