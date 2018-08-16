@@ -155,7 +155,7 @@ levy <- function(x, ii = NULL){
   
   x <- x * 20 - 10
   
-  d <- ncol(x)
+  d <- length(ii)
   w <- 1 + (x[,ii, drop = F] - 1)/4
   
   term1 <- (sin(pi*w[,1]))^2 

@@ -9,7 +9,7 @@ library(DiceKriging)
 
 set.seed(42)
 save_intermediate <- TRUE
-case <- 3
+case <- 4
 
 if(case == 1){
   d <- 6
@@ -61,7 +61,7 @@ if(case == 3){
   nrep <- 25
   lower <- rep(0, D)
   upper <- rep(1, D)
-  popsize <- 40
+  popsize <- 80
   covtype <- "matern5_2"
   roll <- T
   
@@ -76,6 +76,28 @@ if(case == 3){
   mat_effective <-  NULL # matrix of effective variables (for D)
 
   fstar <- 11.7464
+  
+}
+
+if(case == 4){
+  d <- 10
+  D <- 200
+  budget <- 250
+  nrep <- 25
+  lower <- rep(0, D)
+  upper <- rep(1, D)
+  popsize <- 80
+  covtype <- "matern5_2"
+  roll <- T
+  ftest <- levy
+  
+  # To ensure fairness among runs
+  mat_effective <- matrix(0, nrep, d) # matrix of effective variables (for D)
+  for(i in 1:nrep){
+    mat_effective[i,] <- sample(1:D, d)
+  }
+  
+  fstar <- 0
   
 }
 
