@@ -104,7 +104,7 @@ if(case == 4){
 if(case == 5){
   d <- 2
   D <- 80
-  budget <- 250
+  budget <- 100
   nrep <- 25
   lower <- rep(0, D)
   upper <- rep(1, D)
