@@ -161,6 +161,13 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   
   # Number of points of the DoE
   n.init <- max(4 * d, round(budget/3))
+  if(control$warping == "kX"){
+    if(n.init < D + 1 && D + 1 < budget){
+      n.init <- D + 1
+    }else{
+      print("Budget too small for warping kX, need at least D+2")
+    }
+  }
   
   if(control$reverse){
     DoE <- designZ(n.init, tA, bxsize, type = control$designtype)
