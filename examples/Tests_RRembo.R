@@ -1,7 +1,7 @@
 library("doParallel")
 library("foreach")
 
-nCores <- detectCores()
+nCores <- detectCores() - 1
 cl <-  makeCluster(nCores)
 registerDoParallel(cl)
 library(RRembo)
@@ -81,7 +81,7 @@ if(case == 3){
 
 if(case == 4){
   d <- 10
-  D <- 200
+  D <- 80
   budget <- 250
   nrep <- 25
   lower <- rep(0, D)
@@ -101,6 +101,27 @@ if(case == 4){
   
 }
 
+if(case == 5){
+  d <- 2
+  D <- 80
+  budget <- 250
+  nrep <- 25
+  lower <- rep(0, D)
+  upper <- rep(1, D)
+  popsize <- 80
+  covtype <- "matern5_2"
+  roll <- T
+  ftest <- giunta
+  
+  # To ensure fairness among runs
+  mat_effective <- matrix(0, nrep, d) # matrix of effective variables (for D)
+  for(i in 1:nrep){
+    mat_effective[i,] <- sample(1:D, d)
+  }
+  
+  fstar <- 0
+  
+}
 
 cat('RO \n')
 # Random optimization in the high-dimensional space
