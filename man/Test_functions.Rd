@@ -7,6 +7,7 @@
 \alias{hartman6_mod_log}
 \alias{cola}
 \alias{giunta}
+\alias{levy}
 \title{Test function}
 \usage{
 sphere(x, x0, ii)
@@ -20,6 +21,8 @@ hartman6_mod_log(x, ii = c(1, 2, 3, 4, 5, 6))
 cola(x)
 
 giunta(x, ii = NULL)
+
+levy(x, ii = NULL)
 }
 \arguments{
 \item{x}{vector of input location, or, for \code{sphere} and \code{giunta}, matrix specifying locations where the function is to be evaluated, one point per row.}
@@ -36,6 +39,12 @@ Sphere function (Euclidean distance to given optimum) (nD)
 Cola function (17D)
 
 Giunta function (nD)
+
+Levy function (nD)
+}
+\details{
+Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
+and available at https://www.sfu.ca/~ssurjano/levy.html.
 }
 \examples{
 ## Sphere function example
@@ -60,6 +69,10 @@ cola(xstar) # 11.7464
 # Giunta function
 xstar <- c(0.73366, 0.73366)
 giunta(xstar) # 0.06447042
+
+# Levy function
+xstar <- rep(0.55, 10)
+levy(xstar) # 0
 
 }
 \references{

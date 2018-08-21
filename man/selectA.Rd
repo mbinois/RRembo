@@ -15,9 +15,12 @@ selectA(d, D, type = "isotropic", control = list(n = 30, maxit = 100,
 \item{type}{method of random sampling of coefficients or selection procedure, one of
 \itemize{
 \item 'Gaussian' for standard Gaussian i.i.d. coefficients and orthonormalization
-\item 'isotropic' for random points on the d-sphere
-\item 'optimized' for known optimal solutions (e.g., d = 2) or using a potential
-\item 'standard' for the original REMBO iid random matrix
+\item 'isotropic' for a random matrix with equal row norms and orthonormal columns.
+It is obtained starting with a random Gaussian i.i.d. matrix,
+then alternating normalization of rows and orthonormalization of columns.
+\item 'optimized' for known optimal solutions (e.g., d = 2) or using a potential. 
+Considering each row as a point on the d-hypersphere, try to maximize the minimum distance between any two points.
+\item 'standard' for the original REMBO iid random matrix.
 }}
 
 \item{control}{list to be passed to \code{\link[stats]{optim}} in the \code{optimized} case (d > 2)}
