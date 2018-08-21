@@ -232,7 +232,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   }
   
   # best value so far, slightly perturbed, to increase exploitation in EI optimization
-  spartan <- DoE[which.min(fvalues),] + rnorm(d, sd = 0.05)
+  spartan <- pmin(boundsEIopt, pmax(-boundsEIopt, DoE[which.min(fvalues),] + rnorm(d, sd = 0.05)))
   
   while(model@n < budget){
     
@@ -296,7 +296,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     
     ind <- which.min(fvalues)
     
-    spartan <- DoE[ind,] + rnorm(d, sd = 0.05)
+    spartan <- pmin(boundsEIopt, pmax(-boundsEIopt, DoE[which.min(fvalues),] + rnorm(d, sd = 0.05)))
     
     if(control$reverse){
       minpar <- ((mapZX(DoE[ind,], A)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = 1, ncol = length(lower), byrow = T)
