@@ -142,6 +142,7 @@ giunta <- function(x, ii = NULL){
 ##' Levy function (nD)
 ##' @title Levy function
 ##' @export
+##' @rdname Test_functions
 ##' @examples 
 ##' # Levy function
 ##' xstar <- rep(0.55, 10)

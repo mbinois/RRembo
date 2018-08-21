@@ -40,10 +40,6 @@ Psi_Y <- function(y, A){
   return(t(crossprod(A, Az)))
 }
 
-function(x1, x2){
-  return(sqrt(sum((x1-x2)^2)))
-}
-
 ##' Warping psi for the alternative mapping procedure
 ##' @title Warping psi for points in the zonotope Z
 ##' @param z matrix of low dimensional coordinates, one point per row. These points must belong to Z, that can be checked by testZ
@@ -139,7 +135,7 @@ Psi_Y_nonort <- function(y, A){
     }
   }
 
-  return(Az)
+  return(tcrossprod(ginv(A), Az))
 }
 
 distance <- function(x1,x2){
