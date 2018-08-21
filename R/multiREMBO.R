@@ -125,11 +125,6 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     if(control$warping == 'kX'){
       map <- randEmb
     }
-    if(control$warping == 'kpA'){
-      map <- function(y, A){
-        return(ortProj(randEmb(y, A), tA))
-      }
-    }
     if(control$warping == 'Psi'){
       if(control$Atype == 'standard'){
         map <- Psi_Y_nonort
@@ -139,7 +134,7 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
       
     }
   }else{
-    if(control$warping == 'kY' || control$warping == 'pA'){
+    if(control$warping == 'kY'){
       map <- function(z, A){
         if(is.null(nrow(z)))
           z <- matrix(z, nrow = 1)
