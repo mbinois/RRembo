@@ -19,11 +19,12 @@ Psi_Y <- function(y, A){
   if(is.null(dim(y)))
     y <- matrix(y, nrow = 1)
   
-  pA <- tcrossprod(A)
+  # pA <- tcrossprod(A)
   
   px <- randEmb(y, A)
   
-  papx <- tcrossprod(pA, px)
+  # papx <- tcrossprod(pA, px)
+  papx <- tcrossprod(A, px %*% A)
   
   pivot <- Az <- papx
   
@@ -37,7 +38,7 @@ Psi_Y <- function(y, A){
     }
   }
   
-  return(t(crossprod(A, Az)))
+  return(crossprod(Az, A))
 }
 
 ##' Warping psi for the alternative mapping procedure
@@ -87,7 +88,7 @@ Psi_Z <- function(z, A, eps = 1e-6){
     }
   }
   
-  return(t(crossprod(A, Az)))
+  return(crossprod(Az, A))
 }
 
 
@@ -106,7 +107,7 @@ Psi_Z <- function(z, A, eps = 1e-6){
 ##' Z <- Psi_Y(Y, A)
 ##' plot(Z)
 ##' Z2 <- Psi_Y_nonort(Y, A)
-##' points(t(ginv(A) %*% t(Z2)), col = 'red')
+##' points(Z2, col = 'red')
 ##' library(far)
 ##' B <- orthonormalization(A, basis = FALSE)
 ##' Z3 <- Psi_Y(Y, B)
@@ -135,7 +136,7 @@ Psi_Y_nonort <- function(y, A){
     }
   }
 
-  return(tcrossprod(ginv(A), Az))
+  return(tcrossprod(Az, ginv(A)))
 }
 
 distance <- function(x1,x2){
