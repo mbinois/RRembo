@@ -223,7 +223,8 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
   # best value so far, slightly perturbed, to increase exploitation in EI optimization
   ind <- is.nondominated(fvalues)
   PF <- fvalues[ind,]
-  spartan <- DoE[ind,] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
+  spartan <- DoE[ind,,drop = F] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
+  spartan <- t(apply(spartan, 1, function(x)  pmin(boundsEIopt, pmax(-boundsEIopt, x))))
   
   while(model[[1]]@n < budget){
     
@@ -295,7 +296,8 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     
     ind <- is.nondominated(fvalues)
     PF <- fvalues[ind,]
-    spartan <- DoE[ind,] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
+    spartan <- DoE[ind,,drop = F] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
+    spartan <- t(apply(spartan, 1, function(x)  pmin(boundsEIopt, pmax(-boundsEIopt, x))))
     
     if(control$reverse){
       minpar <- ((mapZX(DoE[ind,], A)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(PF), ncol = length(lower), byrow = T)
