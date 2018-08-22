@@ -95,6 +95,8 @@ Psi_Z <- function(z, A, eps = 1e-6){
 ##' Warping psi for points in Y, non normalized A
 ##' @param y matrix of low dimensional coordinates, one point per row
 ##' @param A random embedding matrix with non-othogonal columns
+##' @param pA optional projection matrix onto Ran(A)
+##' @param invA optional pseudo inverse of A
 ##' @export
 ##' @examples
 ##' set.seed(42)
@@ -114,11 +116,14 @@ Psi_Z <- function(z, A, eps = 1e-6){
 ##' points(Z3, pch = 20)
 ##' @importFrom MASS ginv
 ##' @seealso  \code{\link[RemboIV]{Psi_Y}} if \code{A} has orthogonal columns
-Psi_Y_nonort <- function(y, A){
+Psi_Y_nonort <- function(y, A, pA = NULL, invA = NULL){
   if(is.null(dim(y)))
     y <- matrix(y, nrow = 1)
-
-  pA <- A %*% ginv(t(A) %*% A) %*% t(A)
+  
+  if(is.null(pA)) 
+    pA <- A %*% ginv(t(A) %*% A) %*% t(A)
+  
+  if(is.null(invA)) invA <- ginv(A)
 
   px <- randEmb(y, A)
 
@@ -136,7 +141,7 @@ Psi_Y_nonort <- function(y, A){
     }
   }
 
-  return(tcrossprod(Az, ginv(A)))
+  return(tcrossprod(Az, invA))
 }
 
 distance <- function(x1,x2){

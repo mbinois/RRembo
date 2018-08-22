@@ -4,7 +4,7 @@
 \alias{Psi_Y_nonort}
 \title{Warping psi for points in Y, non normalized A}
 \usage{
-Psi_Y_nonort(y, A)
+Psi_Y_nonort(y, A, pA = NULL, invA = NULL)
 }
 \arguments{
 \item{y}{matrix of low dimensional coordinates, one point per row}
