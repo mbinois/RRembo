@@ -12,17 +12,20 @@ for(case in 1:5){
   set.seed(42)
   save_intermediate <- TRUE
   
+  # Global options
+  nrep <- 25
+  lower <- rep(0, D)
+  upper <- rep(1, D)
+  popsize <- 80
+  roll <- T
+  
   if(case == 1){
     d <- 6
     D <- 50
-    nrep <- 25
     budget <- 250
-    lower <- rep(0, D)
-    upper <- rep(1, D)
-    ftest <- hartman6_mod_log
-    popsize <- 80
     covtype <- "matern5_2"
-    roll <- T
+    
+    ftest <- hartman6_mod_log
     
     # To ensure fairness among runs
     mat_effective <- matrix(0, nrep, d) # matrix of effective variables (for D)
@@ -35,14 +38,9 @@ for(case in 1:5){
   if(case == 2){
     d <- 2
     D <- 25
-    nrep <- 25
     budget <- 100
-    lower <- rep(0, D)
-    upper <- rep(1, D)
-    popsize <- 80
     covtype <- "matern3_2"
-    roll <- T
-    
+
     ftest <- branin_mod
     
     # To ensure fairness among runs
@@ -50,22 +48,15 @@ for(case in 1:5){
     for(i in 1:nrep){
       mat_effective[i,] <- sample(1:D, d)
     }
-    
     fstar <- 0.3978874
-    
   }
   
   if(case == 3){
     d <- 6
     D <- 17
     budget <- 250
-    nrep <- 25
-    lower <- rep(0, D)
-    upper <- rep(1, D)
-    popsize <- 80
     covtype <- "matern5_2"
-    roll <- T
-    
+
     cola_mod <- function(x, ii = NULL){
       if(is.null(dim(x))) x <- matrix(x, 1)
       return(apply(x, 1, cola))
@@ -75,21 +66,14 @@ for(case in 1:5){
     
     # To ensure fairness among runs
     mat_effective <-  NULL # matrix of effective variables (for D)
-    
     fstar <- 11.7464
-    
   }
   
   if(case == 4){
     d <- 10
     D <- 80
     budget <- 250
-    nrep <- 25
-    lower <- rep(0, D)
-    upper <- rep(1, D)
-    popsize <- 80
     covtype <- "matern5_2"
-    roll <- T
     ftest <- levy
     
     # To ensure fairness among runs
@@ -97,21 +81,14 @@ for(case in 1:5){
     for(i in 1:nrep){
       mat_effective[i,] <- sample(1:D, d)
     }
-    
     fstar <- 0
-    
   }
   
   if(case == 5){
     d <- 2
     D <- 80
     budget <- 100
-    nrep <- 25
-    lower <- rep(0, D)
-    upper <- rep(1, D)
-    popsize <- 80
     covtype <- "matern5_2"
-    roll <- T
     ftest <- giunta
     
     # To ensure fairness among runs
@@ -119,9 +96,7 @@ for(case in 1:5){
     for(i in 1:nrep){
       mat_effective[i,] <- sample(1:D, d)
     }
-    
-    fstar <- 0
-    
+    fstar <- 0.06447042
   }
   
   cat('RO \n')
@@ -253,7 +228,7 @@ for(case in 1:5){
           rskY[,budget] - fstar, rskX[,budget] - fstar, rskP[,budget] - fstar,
           rrkY[,budget] - fstar, rrkX[,budget] - fstar, rrkP[,budget] - fstar)
   
-  
+  # Print mean results
   plot(apply(rRO, 2, mean), type = 'l', lwd = 2)
   lines(apply(rskY, 2, mean), col = 2, lwd = 2)
   lines(apply(rskX, 2, mean), col = 3, lwd = 2)
