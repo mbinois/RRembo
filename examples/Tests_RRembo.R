@@ -19,9 +19,9 @@ for(case in 1:5){
   popsize <- 80
   roll <- T
   
-  if(case == 1){
+  if(case == 1 || case == 6){
     d <- 6
-    D <- 50
+    if(case == 1) D <- 50 else D <- 1000
     budget <- 250
     covtype <- "matern5_2"
     
@@ -35,12 +35,12 @@ for(case in 1:5){
     fstar <- -1.200678
   }
   
-  if(case == 2){
+  if(case == 2 || case == 7){
     d <- 2
-    D <- 25
+    if(case == 2) D <- 25 else D <- 1000
     budget <- 100
     covtype <- "matern3_2"
-
+    
     ftest <- branin_mod
     
     # To ensure fairness among runs
@@ -56,7 +56,7 @@ for(case in 1:5){
     D <- 17
     budget <- 250
     covtype <- "matern5_2"
-
+    
     cola_mod <- function(x, ii = NULL){
       if(is.null(dim(x))) x <- matrix(x, 1)
       return(apply(x, 1, cola))
@@ -126,19 +126,24 @@ for(case in 1:5){
   
   ###
   
-  cat('REMBO standard k_X \n')
-  # Standard REMBO-like method
-  tsX <- Sys.time()
-  res_standard_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
-    set.seed(i)
-    res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
-                     ii = mat_effective[i,],
-                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
-    res$y
+  if(D < budget){
+    cat('REMBO standard k_X \n')
+    # Standard REMBO-like method
+    tsX <- Sys.time()
+    res_standard_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
+      set.seed(i)
+      res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
+                       ii = mat_effective[i,],
+                       control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
+                                      inneroptim = "StoSOO", covtype = covtype, roll = roll))
+      res$y
+    }
+    tsX <- difftime(Sys.time(), tsX, units = "sec")
+    if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
+  }else{
+    # Anisotropic kernel cannot be fit
+    res_standard_kX <- NULL
   }
-  tsX <- difftime(Sys.time(), tsX, units = "sec")
-  if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
   
   ###
   
@@ -188,19 +193,22 @@ for(case in 1:5){
   
   ###
   
-  cat('REMBO reverse + Gaussian + kX \n')
-  trX <- Sys.time()
-  res_reverse_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
-    set.seed(i)
-    res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
-                     ii = mat_effective[i,],
-                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
-    res$y
+  if(D < budget){
+    cat('REMBO reverse + Gaussian + kX \n')
+    trX <- Sys.time()
+    res_reverse_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
+      set.seed(i)
+      res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
+                       ii = mat_effective[i,],
+                       control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
+                                      inneroptim = "StoSOO", covtype = covtype, roll = roll))
+      res$y
+    }
+    trX <- difftime(Sys.time(), trX, units = "sec")
+    if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
+  }else{
+    res_reverse_kX <- NULL
   }
-  trX <- difftime(Sys.time(), trX, units = "sec")
-  if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
-  
   ### 
   
   stopCluster(cl)
