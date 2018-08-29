@@ -138,7 +138,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     if(control$warping == 'Psi'){
       if(control$Atype == 'standard'){
         map <- Psi_Y_nonort
-        formals(map)$pA <- A %*% ginv(t(A) %*% A) %*% t(A)
+        formals(map)$pA <- ginv(t(A) %*% A) %*% t(A)
         formals(map)$invA <- ginv(A)
       }else{
         map <- Psi_Y

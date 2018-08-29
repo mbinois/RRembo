@@ -95,7 +95,7 @@ Psi_Z <- function(z, A, eps = 1e-6){
 ##' Warping psi for points in Y, non normalized A
 ##' @param y matrix of low dimensional coordinates, one point per row
 ##' @param A random embedding matrix with non-othogonal columns
-##' @param pA optional projection matrix onto Ran(A)
+##' @param pA optional projection matrix onto Ran(A) (i.e., D to d)
 ##' @param invA optional pseudo inverse of A
 ##' @export
 ##' @examples
@@ -121,27 +121,29 @@ Psi_Y_nonort <- function(y, A, pA = NULL, invA = NULL){
     y <- matrix(y, nrow = 1)
   
   if(is.null(pA)) 
-    pA <- A %*% ginv(t(A) %*% A) %*% t(A)
+    # pA <- A %*% ginv(t(A) %*% A) %*% t(A)
+    pA <- ginv(t(A) %*% A) %*% t(A)
   
   if(is.null(invA)) invA <- ginv(A)
 
   px <- randEmb(y, A)
 
-  papx <- t(pA %*% t(px))
+  # papx <- t(pA %*% t(px))
+  papx <- A %*% tcrossprod(pA, px)
 
   pivot <- Az <- papx
 
   for(i in 1:nrow(y)){
-    if(max(abs(papx[i,])) < 1){
+    if(max(abs(papx[,i])) < 1){
     }else{
-      pivot[i,] <- papx[i,]/max(abs(papx[i,]))
-      tmp <- distance(pivot[i,], px[i,])
-      tmp2 <- sqrt(sum(pivot[i,]^2))
-      Az[i,] <- pivot[i, ]* (tmp2 + tmp)/tmp2
+      pivot[,i] <- papx[,i]/max(abs(papx[,i]))
+      tmp <- distance(pivot[,i], px[i,])
+      tmp2 <- sqrt(sum(pivot[,i]^2))
+      Az[,i] <- pivot[,i]* (tmp2 + tmp)/tmp2
     }
   }
 
-  return(tcrossprod(Az, invA))
+  return(t(invA %*% Az))
 }
 
 distance <- function(x1,x2){
