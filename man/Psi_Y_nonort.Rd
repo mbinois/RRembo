@@ -10,6 +10,10 @@ Psi_Y_nonort(y, A, pA = NULL, invA = NULL)
 \item{y}{matrix of low dimensional coordinates, one point per row}
 
 \item{A}{random embedding matrix with non-othogonal columns}
+
+\item{pA}{optional projection matrix onto Ran(A) (i.e., D to d)}
+
+\item{invA}{optional pseudo inverse of A}
 }
 \description{
 Warping psi for points in Y, non normalized A

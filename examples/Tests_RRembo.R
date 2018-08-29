@@ -3,7 +3,7 @@ library("foreach")
 library("RRembo")
 library("DiceKriging")
 
-for(case in 1:5){
+for(case in 1:7){
   print(case)
   nCores <- detectCores() - 1
   cl <-  makeCluster(nCores)
@@ -14,8 +14,6 @@ for(case in 1:5){
   
   # Global options
   nrep <- 25
-  lower <- rep(0, D)
-  upper <- rep(1, D)
   popsize <- 80
   roll <- T
   
@@ -98,6 +96,9 @@ for(case in 1:5){
     }
     fstar <- 0.06447042
   }
+  
+  lower <- rep(0, D)
+  upper <- rep(1, D)
   
   cat('RO \n')
   # Random optimization in the high-dimensional space
