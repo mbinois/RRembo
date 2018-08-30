@@ -46,6 +46,7 @@ Psi_Y <- function(y, A){
 ##' @param z matrix of low dimensional coordinates, one point per row. These points must belong to Z, that can be checked by testZ
 ##' @param A random embedding matrix
 ##' @param eps to avoid some numerical issues with quadratic programming
+##' @param Aind,Amat optional matrices to be passed to \code{\link[quadprog]{solve.QP.compact}}
 ##' @references 
 ##' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr
 ##' @export
@@ -68,13 +69,13 @@ Psi_Y <- function(y, A){
 ##' plot(PsisY)
 ##' points(PsisZ, col = 'red', pch = 20)
 ##' print(max(abs(PsisY - PsisZ)))
-Psi_Z <- function(z, A, eps = 1e-6){
+Psi_Z <- function(z, A, eps = 1e-6, Amat = NULL, Aind = NULL){
   if(is.null(dim(z)))
     z <- matrix(z, nrow = 1)
   
   papx <- tcrossprod(A, z)
   
-  px <- mapZX(z, A, eps = eps)
+  px <- mapZX(z, A, eps = eps, Amat = Amat, Aind = Aind)
   
   pivot <- Az <- papx
   

@@ -105,10 +105,11 @@ ortProj <- function(x, pA){
 ##' @param z matrix of low-dimensional coordinates in the zonotope, one point per row
 ##' @param A random embedding matrix, such that \code{t(A)A = Id}
 ##' @param eps to avoid some numerical issues with quadratic programming
+##' @param Aind,Amat optional matrices to be passed to \code{\link[quadprog]{solve.QP.compact}}
 ##' @details Numerical problems may occur, then the equality constraints are slightly relaxed.
 ##' @author Mickael Binois
 ##' @export
-##' @importFrom quadprog solve.QP
+##' @importFrom quadprog solve.QP solve.QP.compact
 ##' @references 
 ##' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr
 ##' @examples
@@ -126,14 +127,14 @@ ortProj <- function(x, pA){
 ##'
 ##' print(max(abs(Xback - X)))
 ##' print(mean(Xback - X))
-mapZX <- function(z, A, eps = 1e-6){
+mapZX <- function(z, A, eps = 1e-6, Amat = NULL, Aind = NULL){
   if(is.null(nrow(z)))
     z <- matrix(z, nrow = 1)
   return(t(apply(z, 1, mapzx_1, A = A, eps = eps)))
 }
 
 # for one vector
-mapzx_1 <- function(z, A, eps = 1e-6){
+mapzx_1 <- function(z, A, eps = 1e-6, Aind = NULL, Amat = NULL){
   
   # Points in I need no optimization
   if(max(abs(A %*% z)) <= 1)
@@ -141,11 +142,20 @@ mapzx_1 <- function(z, A, eps = 1e-6){
   
   D <- nrow(A)
   d <- ncol(A)
-  tmp <- try(solve.QP(Dmat = diag(D), dvec = as.vector(A %*% z),
-                      meq = d,
-                      Amat = cbind(A, diag(D), -diag(D)),
-                      bvec = c(z, rep(-1, D), rep(-1,D)), factorized = T)$solution)
   
+  if(is.null(Aind)) Aind <- cbind(matrix(c(D, 1:D), D + 1, d), rbind(rep(1, D * 2), c(1:D, 1:D), matrix(0, D-1, D*2)))
+  if(is.null(Amat)) Amat <- cbind(A, matrix(rep(c(1, 0), times = c(1, D-1)), D, D), matrix(rep(c(-1, 0), times = c(1, D-1)), D, D))
+  
+  # tmp <- try(solve.QP(Dmat = diag(D), dvec = as.vector(A %*% z),
+  #                     meq = d,
+  #                     Amat = cbind(A, diag(D), -diag(D)),
+  #                     bvec = c(z, rep(-1, D), rep(-1,D)), factorized = T)$solution)
+  tmp <- try(solve.QP.compact(Dmat = diag(D), dvec = as.vector(A %*% z),
+                      meq = d,
+                      Amat = Amat,
+                      Aind = Aind,
+                      bvec = c(z, rep(-1, D), rep(-1,D)), factorized = T)$solution)
+
   if(length(tmp) == D){
     x <- tmp
   }else{

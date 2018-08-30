@@ -4,7 +4,7 @@
 \alias{mapZX}
 \title{Alternative mapping}
 \usage{
-mapZX(z, A, eps = 1e-06)
+mapZX(z, A, eps = 1e-06, Amat = NULL, Aind = NULL)
 }
 \arguments{
 \item{z}{matrix of low-dimensional coordinates in the zonotope, one point per row}
@@ -12,6 +12,8 @@ mapZX(z, A, eps = 1e-06)
 \item{A}{random embedding matrix, such that \code{t(A)A = Id}}
 
 \item{eps}{to avoid some numerical issues with quadratic programming}
+
+\item{Aind, Amat}{optional matrices to be passed to \code{\link[quadprog]{solve.QP.compact}}}
 }
 \description{
 Map from zonotope Z to the convex projection of A Y (E)

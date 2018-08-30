@@ -4,7 +4,7 @@
 \alias{Psi_Z}
 \title{Warping psi for points in the zonotope Z}
 \usage{
-Psi_Z(z, A, eps = 1e-06)
+Psi_Z(z, A, eps = 1e-06, Amat = NULL, Aind = NULL)
 }
 \arguments{
 \item{z}{matrix of low dimensional coordinates, one point per row. These points must belong to Z, that can be checked by testZ}
@@ -12,6 +12,8 @@ Psi_Z(z, A, eps = 1e-06)
 \item{A}{random embedding matrix}
 
 \item{eps}{to avoid some numerical issues with quadratic programming}
+
+\item{Aind, Amat}{optional matrices to be passed to \code{\link[quadprog]{solve.QP.compact}}}
 }
 \description{
 Warping psi for the alternative mapping procedure

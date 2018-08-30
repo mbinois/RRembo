@@ -146,6 +146,10 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       
     }
   }else{
+    # precomputations
+    Amat <- cbind(A, matrix(rep(c(1, 0), times = c(1, D-1)), D, D), matrix(rep(c(-1, 0), times = c(1, D-1)), D, D))
+    Aind <- cbind(matrix(c(D, 1:D), D + 1, d), rbind(rep(1, D * 2), c(1:D, 1:D), matrix(0, D-1, D*2)))
+    
     if(control$warping == 'kY'){
       map <- function(z, A){
         if(is.null(nrow(z)))
@@ -155,9 +159,13 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     }
     if(control$warping == 'kX'){
       map <- mapZX
+      formals(map)$Amat <- Amat
+      formals(map)$Aind <- Aind
     }
     if(control$warping == 'Psi'){
       map <- Psi_Z
+      formals(map)$Amat <- Amat
+      formals(map)$Aind <- Aind
     }
   }
   
@@ -184,7 +192,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
         DoE[which(indtest),] <- control$initdesigns
     }
     
-    fvalues <- fn(((mapZX(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    fvalues <- fn(((mapZX(DoE, A, Amat = Amat, Aind = Aind) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
   }else{
     DoE <- designU(n.init, A, bxsize, type = control$designtype, standard = control$standard)
     fvalues <- fn(((randEmb(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
@@ -285,7 +293,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       cat("No improvement or not even in Z \n")
     }
     if(control$reverse){
-      newY <- fn(((mapZX(opt$par, A) + 1)/2) %*% diag(upper - lower) + lower, ...)
+      newY <- fn(((mapZX(opt$par, A, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower, ...)
     }else{
       newY <- fn(((randEmb(opt$par, A) +  1)/2) %*% diag(upper - lower) + lower, ...)
     }
@@ -301,7 +309,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     spartan <- pmin(boundsEIopt, pmax(-boundsEIopt, DoE[which.min(fvalues),] + rnorm(d, sd = 0.05)))
     
     if(control$reverse){
-      minpar <- ((mapZX(DoE[ind,], A)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = 1, ncol = length(lower), byrow = T)
+      minpar <- ((mapZX(DoE[ind,], A, Amat = Amat, Aind = Aind)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = 1, ncol = length(lower), byrow = T)
     }else{
       minpar <- ((randEmb(DoE[ind,], A)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = 1, ncol = length(lower), byrow = T)
     }
