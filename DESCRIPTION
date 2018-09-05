@@ -1,7 +1,7 @@
 Package: RRembo
 Type: Package
 Title: Random EMbedding Bayesian Optimization for R
-Version: 0.1.1
+Version: 0.1.2
 Author: Mickael Binois
 Maintainer: Mickael Binois <mbinois@chicagobooth.edu>
 Description: Implementation of the Random EMbedding Bayesian Optimization method with several improvements. Those include domain selection as well as warped kernels.

@@ -5,6 +5,8 @@
 ##' @param ... additional parameters of fn
 ##' @param lower,upper bounds for optimization
 ##' @param budget total number of calls to the objective function
+##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
+##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
 ##' @details Options available from control are:
 ##' \itemize{
@@ -18,7 +20,6 @@
 ##' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
 ##' \item \code{lightreturn} only returns \code{par} and \code{value};
 ##' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-##' \item \code{covtype}, \code{covreestim}, \code{iso} see \code{\link[DiceKriging]{km}};
 ##' \item \code{designtype} one of "LHS", "maximin" and 'unif',
 ##'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
 ##' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
@@ -74,9 +75,10 @@
 ##' boxplot(res - 0.397887)
 ##' }
 easyREMBO <- function(par, fn, lower, upper, budget, ...,
+                      kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                       control = list(Atype = 'isotropic', reverse = TRUE, Amat = NULL, bxsize = NULL, testU = TRUE, standard = FALSE,
-                                     maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', covtype = "matern5_2", covreestim = TRUE, designtype = 'unif',
-                                     tcheckP = 1e-5, roll = F, initdesigns = NULL, iso = T,
+                                     maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
+                                     tcheckP = 1e-5, roll = F, initdesigns = NULL,
                                      inneroptim = "pso", popsize = 80, gen = 40)){
   # Initialisation
   d <- length(par)
@@ -89,9 +91,6 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   if(is.null(control$maxitOptA)) control$maxitOptA <- 100
   if(is.null(control$lightreturn)) control$lightreturn <- FALSE
   if(is.null(control$warping)) control$warping <- 'Psi'
-  if(is.null(control$covtype)) control$covtype <- 'matern5_2'
-  if(is.null(control$iso)) control$iso <- TRUE
-  if(is.null(control$covreestim)) control$covreestim <- TRUE
   if(is.null(control$inneroptim)) control$inneroptim <- 'pso'
   if(is.null(control$popsize)) control$popsize <- 80
   if(is.null(control$gen)) control$gen <- 40
@@ -101,6 +100,10 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   if(is.null(control$tcheckP)) control$tcheckP <- 1e-4
   if(is.null(control$roll)) control$roll <- FALSE
   
+  if(is.null(kmcontrol$covtype)) kmcontrol$covtype <- 'matern5_2'
+  if(is.null(kmcontrol$iso)) kmcontrol$iso <- TRUE
+  if(is.null(kmcontrol$covreestim)) kmcontrol$covreestim <- TRUE
+  if(is.null(kmcontrol$formula)) kmcontrol$formula <- ~1
   
   # Selection of the random embedding matrix
   if(is.null(control$Amat)){
@@ -200,7 +203,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   
   design <- map(DoE, A)
   
-  model <- km(~1, design = design, response = fvalues, covtype = control$covtype, iso = control$iso,
+  model <- km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,
               control = list(trace = FALSE))
   
   # Expected Improvement function in the REMBO case
@@ -314,7 +317,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       minpar <- ((randEmb(DoE[ind,], A)+1)/2) %*% diag(upper - lower) + matrix(lower, nrow = 1, ncol = length(lower), byrow = T)
     }
     
-    newmodel <- try(update(model, newDesign, newY, cov.reestim = control$covreestim,
+    newmodel <- try(update(model, newDesign, newY, cov.reestim = kmcontrol$covreestim,
                            kmcontrol = list(control = list(trace = FALSE))))
     
     if(typeof(newmodel) == "character"){

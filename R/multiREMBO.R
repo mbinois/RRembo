@@ -6,6 +6,8 @@
 ##' @param critcontrol optional controls for hypervolume computations, see \code{\link[GPareto]{crit_EHI}}
 ##' @param lower,upper bounds for optimization
 ##' @param budget total number of calls to the objective function
+##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
+##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
 ##' @details Options available from control are:
 ##' \itemize{
@@ -19,7 +21,6 @@
 ##' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
 ##' \item \code{lightreturn} only returns \code{par} and \code{value};
 ##' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-##' \item \code{covtype}, \code{covreestim}, \code{iso} see \code{\link[DiceKriging]{km}};
 ##' \item \code{designtype} one of "LHS", "maximin" and 'unif',
 ##'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
 ##' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
@@ -62,10 +63,11 @@
 ##' points(sol$values, col = "blue", pch = 20)
 ##'
 ##' }
-multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL, 
+multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
+                       kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE, formula = ~1),
                        control = list(Atype = 'isotropic', reverse = TRUE, Amat = NULL, bxsize = NULL, testU = TRUE, standard = FALSE,
-                                      maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', covtype = "matern5_2", covreestim = TRUE, designtype = 'unif',
-                                      tcheckP = 1e-5, roll = F, initdesigns = NULL, iso = T,
+                                      maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
+                                      tcheckP = 1e-5, roll = F, initdesigns = NULL,
                                       inneroptim = "pso", popsize = 80, gen = 40)){
   # Initialisation
   d <- length(par)
@@ -78,9 +80,6 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
   if(is.null(control$maxitOptA)) control$maxitOptA <- 100
   if(is.null(control$lightreturn)) control$lightreturn <- FALSE
   if(is.null(control$warping)) control$warping <- 'Psi'
-  if(is.null(control$covtype)) control$covtype <- 'matern5_2'
-  if(is.null(control$iso)) control$iso <- TRUE
-  if(is.null(control$covreestim)) control$covreestim <- TRUE
   if(is.null(control$inneroptim)) control$inneroptim <- 'pso'
   if(is.null(control$popsize)) control$popsize <- 80
   if(is.null(control$gen)) control$gen <- 40
@@ -91,6 +90,11 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
   if(is.null(control$roll)) control$roll <- FALSE
   if(is.null(critcontrol$refPoint)) noRef <- TRUE else noRef <- FALSE
   if(is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
+  
+  if(is.null(kmcontrol$covtype)) kmcontrol$covtype <- 'matern5_2'
+  if(is.null(kmcontrol$iso)) kmcontrol$iso <- TRUE
+  if(is.null(kmcontrol$covreestim)) kmcontrol$covreestim <- TRUE
+  if(is.null(kmcontrol$formula)) kmcontrol$formula <- ~1
   
   # Selection of the random embedding matrix
   if(is.null(control$Amat)){
@@ -179,7 +183,7 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
   
   model <- list()
   for(i in 1:nobj){
-    model[[i]] <- km(~1, design = design, response = fvalues[,i], covtype = control$covtype, iso = control$iso,
+    model[[i]] <- km(kmcontrol$formula, design = design, response = fvalues[,i], covtype = kmcontrol$covtype, iso = kmcontrol$iso,
                      control = list(trace = FALSE))
   }
   
@@ -308,7 +312,7 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     ## Update models
     newmodel <- list()
     for(i in 1:nobj){
-      newmodel[[i]] <- try(update(model[[i]], newDesign, newY[i], cov.reestim = control$covreestim,
+      newmodel[[i]] <- try(update(model[[i]], newDesign, newY[i], cov.reestim = kmcontrol$covreestim,
                              kmcontrol = list(control = list(trace = FALSE))))
       
       if(typeof(newmodel[[i]]) == "character"){

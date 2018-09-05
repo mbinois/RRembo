@@ -5,11 +5,12 @@
 \title{Random Embedding Bayesian Optimization}
 \usage{
 multiREMBO(par, fn, lower, upper, budget, ..., critcontrol = NULL,
-  control = list(Atype = "isotropic", reverse = TRUE, Amat = NULL, bxsize
-  = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn =
-  FALSE, warping = "Psi", covtype = "matern5_2", covreestim = TRUE,
-  designtype = "unif", tcheckP = 1e-05, roll = F, initdesigns = NULL, iso =
-  T, inneroptim = "pso", popsize = 80, gen = 40))
+  kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE,
+  formula = ~1), control = list(Atype = "isotropic", reverse = TRUE, Amat
+  = NULL, bxsize = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100,
+  lightreturn = FALSE, warping = "Psi", designtype = "unif", tcheckP =
+  1e-05, roll = F, initdesigns = NULL, inneroptim = "pso", popsize = 80,
+  gen = 40))
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}
@@ -23,6 +24,9 @@ multiREMBO(par, fn, lower, upper, budget, ..., critcontrol = NULL,
 \item{...}{additional parameters of fn}
 
 \item{critcontrol}{optional controls for hypervolume computations, see \code{\link[GPareto]{crit_EHI}}}
+
+\item{kmcontrol}{an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
+\code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}}
 
 \item{control}{an optional list of control parameters. See "Details"}
 }
@@ -42,7 +46,6 @@ Options available from control are:
 \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
 \item \code{lightreturn} only returns \code{par} and \code{value};
 \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-\item \code{covtype}, \code{covreestim}, \code{iso} see \code{\link[DiceKriging]{km}};
 \item \code{designtype} one of "LHS", "maximin" and 'unif',
  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
 \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
