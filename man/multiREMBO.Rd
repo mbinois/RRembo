@@ -4,13 +4,13 @@
 \alias{multiREMBO}
 \title{Random Embedding Bayesian Optimization}
 \usage{
-multiREMBO(par, fn, lower, upper, budget, ..., critcontrol = NULL,
+multiREMBO(par, fn, lower, upper, budget, ...,
+  critcontrol = list(distance = "euclidean", threshold = 1e-04),
   kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE,
-  formula = ~1), control = list(Atype = "isotropic", reverse = TRUE, Amat
-  = NULL, bxsize = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100,
-  lightreturn = FALSE, warping = "Psi", designtype = "unif", tcheckP =
-  1e-05, roll = F, initdesigns = NULL, inneroptim = "pso", popsize = 80,
-  gen = 40))
+  formula = ~1), control = list(Atype = "isotropic", reverse = TRUE,
+  bxsize = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100,
+  lightreturn = FALSE, warping = "Psi", designtype = "unif", roll = F,
+  inneroptim = "pso", popsize = 80, gen = 40), init = NULL)
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}
@@ -29,6 +29,9 @@ multiREMBO(par, fn, lower, upper, budget, ..., critcontrol = NULL,
 \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}}
 
 \item{control}{an optional list of control parameters. See "Details"}
+
+\item{init}{optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.}
 }
 \description{
 REMBO for multi-objective unconstrained problems

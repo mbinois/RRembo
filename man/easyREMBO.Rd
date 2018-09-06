@@ -6,10 +6,10 @@
 \usage{
 easyREMBO(par, fn, lower, upper, budget, ..., kmcontrol = list(covtype =
   "matern5_2", iso = TRUE, covreestim = TRUE, formula = ~1),
-  control = list(Atype = "isotropic", reverse = TRUE, Amat = NULL, bxsize
-  = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn =
-  FALSE, warping = "Psi", designtype = "unif", tcheckP = 1e-05, roll = F,
-  initdesigns = NULL, inneroptim = "pso", popsize = 80, gen = 40))
+  control = list(Atype = "isotropic", reverse = TRUE, bxsize = NULL,
+  testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn = FALSE,
+  warping = "Psi", designtype = "unif", tcheckP = 1e-05, roll = F,
+  inneroptim = "pso", popsize = 80, gen = 40), init = NULL)
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}
@@ -26,28 +26,29 @@ easyREMBO(par, fn, lower, upper, budget, ..., kmcontrol = list(covtype =
 \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}}
 
 \item{control}{an optional list of control parameters. See "Details"}
+
+\item{init}{optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.}
 }
 \description{
 REMBO for unconstrained problems
 }
 \details{
-Options available from control are:
+Options available from \code{control} are:
 \itemize{
 \item \code{Atype} see \code{\link[RRembo]{selectA}};
 \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
  otherwise the original mapping with convex projection;
-\item \code{Amat} matrix defining the random embedding;
 \item \code{bxsize} scalar controling the box size in the low-dimensional space;
 \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
 \item \code{standard} for using settings of the original REMBO method;
 \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
 \item \code{lightreturn} only returns \code{par} and \code{value};
 \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-\item \code{designtype} one of "LHS", "maximin" and 'unif',
+\item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
 \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
 \item \code{roll} to alternate between optimization methods;
-\item \code{initdesigns} initial design matrix
 \item \code{inneroptim} optimization method for EI
 \item \code{popsize, gen} population size and number of optimization generations of EI
 }
