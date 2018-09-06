@@ -8,23 +8,23 @@
 ##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
 ##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
-##' @details Options available from control are:
+##' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+##' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
+##' @details Options available from \code{control} are:
 ##' \itemize{
 ##' \item \code{Atype} see \code{\link[RRembo]{selectA}};
 ##' \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
 ##'  otherwise the original mapping with convex projection;
-##' \item \code{Amat} matrix defining the random embedding;
 ##' \item \code{bxsize} scalar controling the box size in the low-dimensional space;
 ##' \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
 ##' \item \code{standard} for using settings of the original REMBO method;
 ##' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
 ##' \item \code{lightreturn} only returns \code{par} and \code{value};
 ##' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-##' \item \code{designtype} one of "LHS", "maximin" and 'unif',
+##' \item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
 ##'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
 ##' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
 ##' \item \code{roll} to alternate between optimization methods;
-##' \item \code{initdesigns} initial design matrix
 ##' \item \code{inneroptim} optimization method for EI
 ##' \item \code{popsize, gen} population size and number of optimization generations of EI
 ##' }
@@ -76,10 +76,11 @@
 ##' }
 easyREMBO <- function(par, fn, lower, upper, budget, ...,
                       kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
-                      control = list(Atype = 'isotropic', reverse = TRUE, Amat = NULL, bxsize = NULL, testU = TRUE, standard = FALSE,
+                      control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
                                      maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
-                                     tcheckP = 1e-5, roll = F, initdesigns = NULL,
-                                     inneroptim = "pso", popsize = 80, gen = 40)){
+                                     tcheckP = 1e-5, roll = F,
+                                     inneroptim = "pso", popsize = 80, gen = 40),
+                      init = NULL){
   # Initialisation
   d <- length(par)
   D <- length(lower)
@@ -105,11 +106,14 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   if(is.null(kmcontrol$covreestim)) kmcontrol$covreestim <- TRUE
   if(is.null(kmcontrol$formula)) kmcontrol$formula <- ~1
   
+  if(!is.null(init$fvalues) && (is.null(init$Amat) || is.null(init$low_dim_design)))
+    stop("When providing initial fvalues, both Amat and low_dim_design must be provided.")
+  
   # Selection of the random embedding matrix
-  if(is.null(control$Amat)){
+  if(is.null(init$Amat)){
     A <- selectA(d, D, type = control$Atype, control = list(maxit = control$maxitOptA))
   }else{
-    A <- control$Amat
+    A <- init$Amat
   }
   
   if(d == D)
@@ -173,32 +177,49 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   }
   
   # Number of points of the DoE
-  n.init <- max(4 * d, round(budget/3))
-  if(control$warping == "kX"){
-    if(n.init < D + 1 && D + 1 < budget){
-      n.init <- D + 1
-    }else{
-      print("Budget too small for warping kX, need at least D+2")
+  if(is.null(init$low_dim_design)){
+    n.init <- max(4 * d, round(budget/3))
+    if(control$warping == "kX"){
+      if(n.init < D + 1 && D + 1 < budget){
+        n.init <- D + 1
+      }else{
+        print("Budget too small for warping kX, need at least D+2")
+      }
     }
+  }else{
+    n.init <- 0 # For update error consistency
   }
   
   if(control$reverse){
-    DoE <- designZ(n.init, tA, bxsize, type = control$designtype)
-    
-    if(!is.null(control$initdesigns)){
-      indtest <- rep(TRUE, nrow(control$initdesigns))
-      if(control$reverse){
-        indtest <- testZ(control$initdesigns, tA)
-      }
-      # else: not yet implemented
-      if(any(indtest))
-        DoE[which(indtest),] <- control$initdesigns
+    # Create design
+    if(is.null(init$low_dim_design)){
+      DoE <- designZ(n.init, tA, bxsize, type = control$designtype)
+    }else{
+      # Or use the one provided
+      indtest <- testZ(init$low_dim_design, tA) # check that provided designs are actually in the zonotope when using the new mapping
+      if(!all(indtest)) warning("Not all initial low dimensional designs belong to Z.")
+      DoE <- init$low_dim_design
     }
     
-    fvalues <- fn(((mapZX(DoE, A, Amat = Amat, Aind = Aind) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    if(is.null(init$fvalues)){
+      fvalues <- fn(((mapZX(DoE, A, Amat = Amat, Aind = Aind) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    }else{
+      fvalues <- init$fvalues
+      if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
+    }
   }else{
-    DoE <- designU(n.init, A, bxsize, type = control$designtype, standard = control$standard)
-    fvalues <- fn(((randEmb(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    # Create design
+    if(is.null(init$low_dim_design)){
+      DoE <- designU(n.init, A, bxsize, type = control$designtype, standard = control$standard)
+    }else{
+      DoE <- init$low_dim_design
+    }
+    if(is.null(init$fvalues)){
+      fvalues <- fn(((randEmb(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    }else{
+      fvalues <- init$fvalues
+      if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
+    }
   }
   
   design <- map(DoE, A)
