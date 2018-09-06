@@ -9,6 +9,8 @@
 ##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
 ##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
+##' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+##' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
 ##' @details Options available from control are:
 ##' \itemize{
 ##' \item \code{Atype} see \code{\link[RRembo]{selectA}};
@@ -63,12 +65,12 @@
 ##' points(sol$values, col = "blue", pch = 20)
 ##'
 ##' }
-multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
+multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = list(distance = "euclidean", threshold = 1e-4),
                        kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE, formula = ~1),
-                       control = list(Atype = 'isotropic', reverse = TRUE, Amat = NULL, bxsize = NULL, testU = TRUE, standard = FALSE,
+                       control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
                                       maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
-                                      tcheckP = 1e-5, roll = F, initdesigns = NULL,
-                                      inneroptim = "pso", popsize = 80, gen = 40)){
+                                      roll = F, inneroptim = "pso", popsize = 80, gen = 40),
+                       init = NULL){
   # Initialisation
   d <- length(par)
   D <- length(lower)
@@ -86,21 +88,26 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
   if(is.null(control$designtype)) control$designtype <- 'unif'
   if(is.null(control$reverse)) control$reverse <- TRUE
   if(is.null(control$maxf)) control$maxf <- control$popsize * control$gen
-  if(is.null(control$tcheckP)) control$tcheckP <- 1e-4
   if(is.null(control$roll)) control$roll <- FALSE
+  
   if(is.null(critcontrol$refPoint)) noRef <- TRUE else noRef <- FALSE
   if(is.null(critcontrol$extendper)) critcontrol$extendper <- 0.2
+  if(is.null(critcontrol$distance)) critcontrol$distance <- "euclidean"
+  if(is.null(critcontrol$threshold)) critcontrol$extendper <- 1e-4
   
   if(is.null(kmcontrol$covtype)) kmcontrol$covtype <- 'matern5_2'
   if(is.null(kmcontrol$iso)) kmcontrol$iso <- TRUE
   if(is.null(kmcontrol$covreestim)) kmcontrol$covreestim <- TRUE
   if(is.null(kmcontrol$formula)) kmcontrol$formula <- ~1
   
+  if(!is.null(init$fvalues) && (is.null(init$Amat) || is.null(init$low_dim_design)))
+    stop("When providing initial fvalues, both Amat and low_dim_design must be provided.")
+  
   # Selection of the random embedding matrix
-  if(is.null(control$Amat)){
+  if(is.null(init$Amat)){
     A <- selectA(d, D, type = control$Atype, control = list(maxit = control$maxitOptA))
   }else{
-    A <- control$Amat
+    A <- init$Amat
   }
   
   if(d == D)
@@ -132,12 +139,18 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     if(control$warping == 'Psi'){
       if(control$Atype == 'standard'){
         map <- Psi_Y_nonort
+        formals(map)$pA <- ginv(t(A) %*% A) %*% t(A)
+        formals(map)$invA <- ginv(A)
       }else{
         map <- Psi_Y
       }
       
     }
   }else{
+    # precomputations
+    Amat <- cbind(A, matrix(rep(c(1, 0), times = c(1, D-1)), D, D), matrix(rep(c(-1, 0), times = c(1, D-1)), D, D))
+    Aind <- cbind(matrix(c(D, 1:D), D + 1, d), rbind(rep(1, D * 2), c(1:D, 1:D), matrix(0, D-1, D*2)))
+    
     if(control$warping == 'kY'){
       map <- function(z, A){
         if(is.null(nrow(z)))
@@ -147,32 +160,61 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     }
     if(control$warping == 'kX'){
       map <- mapZX
+      formals(map)$Amat <- Amat
+      formals(map)$Aind <- Aind
     }
     if(control$warping == 'Psi'){
       map <- Psi_Z
+      formals(map)$Amat <- Amat
+      formals(map)$Aind <- Aind
     }
   }
   
+  
   # Number of points of the DoE
-  n.init <- max(4 * d, round(budget/3))
+  if(is.null(init$low_dim_design)){
+    n.init <- max(4 * d, round(budget/3))
+    if(control$warping == "kX"){
+      if(n.init < D + 1 && D + 1 < budget){
+        n.init <- D + 1
+      }else{
+        print("Budget too small for warping kX, need at least D+2")
+      }
+    }
+  }else{
+    n.init <- 0 # For update error consistency
+  }
   
   if(control$reverse){
-    DoE <- designZ(n.init, tA, bxsize, type = control$designtype)
-    
-    if(!is.null(control$initdesigns)){
-      indtest <- rep(TRUE, nrow(control$initdesigns))
-      if(control$reverse){
-        indtest <- testZ(control$initdesigns, tA)
-      }
-      # else: not yet implemented
-      if(any(indtest))
-        DoE[which(indtest),] <- control$initdesigns
+    # Create design
+    if(is.null(init$low_dim_design)){
+      DoE <- designZ(n.init, tA, bxsize, type = control$designtype)
+    }else{
+      # Or use the one provided
+      indtest <- testZ(init$low_dim_design, tA) # check that provided designs are actually in the zonotope when using the new mapping
+      if(!all(indtest)) warning("Not all initial low dimensional designs belong to Z.")
+      DoE <- init$low_dim_design
     }
     
-    fvalues <- fn(((mapZX(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    if(is.null(init$fvalues)){
+      fvalues <- fn(((mapZX(DoE, A, Amat = Amat, Aind = Aind) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    }else{
+      fvalues <- init$fvalues
+      if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
+    }
   }else{
-    DoE <- designU(n.init, A, bxsize, type = control$designtype, standard = control$standard)
-    fvalues <- fn(((randEmb(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    # Create design
+    if(is.null(init$low_dim_design)){
+      DoE <- designU(n.init, A, bxsize, type = control$designtype, standard = control$standard)
+    }else{
+      DoE <- init$low_dim_design
+    }
+    if(is.null(init$fvalues)){
+      fvalues <- fn(((randEmb(DoE, A) + 1 )/2) %*% diag(upper - lower) + matrix(lower, nrow = nrow(DoE), ncol = length(lower), byrow = T), ...)
+    }else{
+      fvalues <- init$fvalues
+      if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
+    }
   }
   
   design <- map(DoE, A)
@@ -205,11 +247,12 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = NULL,
     res <- rep(NA, nrow(x))
     if(any(inDomain)){
       xtmp <- map(x[inDomain,], A)
-      # identify too close points
-      tmp <- checkPredict(xtmp, model, control$tcheckP, distance = 'euclidean') 
       
-      res[inDomain[tmp]] <- 0
-      if(any(!tmp)) res[inDomain[!tmp]] <- crit_EHI(x = xtmp[!tmp,], model = model, paretoFront = PF, critcontrol = critcontrol)
+      # # identify too close points (Done by crit_EHI)
+      # tmp <- checkPredict(xtmp, model, control$tcheckP, distance = 'euclidean') 
+      # res[inDomain[tmp]] <- 0
+      
+      res[inDomain] <- crit_EHI(x = xtmp, model = model, paretoFront = PF, critcontrol = critcontrol)
     }
     # else{
     #   return(mval * distance(x, 0)) # penalty
