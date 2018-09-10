@@ -19,7 +19,7 @@ for(case in 1:7){
   
   if(case == 1 || case == 6){
     d <- 6
-    if(case == 1) D <- 50 else D <- 1000
+    if(case == 1) D <- 50 else D <- 200
     budget <- 250
     covtype <- "matern5_2"
     
@@ -35,7 +35,7 @@ for(case in 1:7){
   
   if(case == 2 || case == 7){
     d <- 2
-    if(case == 2) D <- 25 else D <- 1000
+    if(case == 2) D <- 25 else D <- 100
     budget <- 100
     covtype <- "matern3_2"
     
