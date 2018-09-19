@@ -126,25 +126,21 @@ for(case in 1:7){
   if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
   
   ###
-  
-  if(D < budget){
-    cat('REMBO standard k_X \n')
-    # Standard REMBO-like method
-    tsX <- Sys.time()
-    res_standard_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
-      set.seed(i)
-      res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
-                       ii = mat_effective[i,],
-                       control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
-                                      inneroptim = "StoSOO", covtype = covtype, roll = roll))
-      res$y
-    }
-    tsX <- difftime(Sys.time(), tsX, units = "sec")
-    if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
-  }else{
-    # Anisotropic kernel cannot be fit
-    res_standard_kX <- NULL
+  if(D > budget) print("Need to unconstrain DiceKriging with iso = T")
+  cat('REMBO standard k_X \n')
+  # Standard REMBO-like method
+  tsX <- Sys.time()
+  res_standard_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
+    set.seed(i)
+    res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
+                     ii = mat_effective[i,],
+                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
+                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+    res$y
   }
+  tsX <- difftime(Sys.time(), tsX, units = "sec")
+  if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
+  
   
   ###
   
@@ -194,23 +190,20 @@ for(case in 1:7){
   
   ###
   
-  if(D < budget){
-    cat('REMBO reverse + Gaussian + kX \n')
-    trX <- Sys.time()
-    res_reverse_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
-      set.seed(i)
-      res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
-                       ii = mat_effective[i,],
-                       control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
-                                      inneroptim = "StoSOO", covtype = covtype, roll = roll))
-      res$y
-    }
-    trX <- difftime(Sys.time(), trX, units = "sec")
-    if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
-  }else{
-    res_reverse_kX <- NULL
+  if(D > budget) print("Need to unconstrain DiceKriging with iso = T")
+  cat('REMBO reverse + Gaussian + kX \n')
+  trX <- Sys.time()
+  res_reverse_kX <- foreach(i=1:nrep, .packages = c("RRembo", "DiceKriging"), .combine = 'rbind') %dopar% {
+    set.seed(i)
+    res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
+                     ii = mat_effective[i,],
+                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
+                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+    res$y
   }
-  ### 
+  trX <- difftime(Sys.time(), trX, units = "sec")
+  if(save_intermediate) save.image(paste0("Wksp_RRembo_case_", case, ".RData"))
+  
   
   stopCluster(cl)
   

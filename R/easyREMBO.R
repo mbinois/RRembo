@@ -179,13 +179,14 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   # Number of points of the DoE
   if(is.null(init$low_dim_design)){
     n.init <- max(4 * d, round(budget/3))
-    if(control$warping == "kX"){
-      if(n.init < D + 1 && D + 1 < budget){
-        n.init <- D + 1
-      }else{
-        print("Budget too small for warping kX, need at least D+2")
-      }
-    }
+    ## This is a DiceKriging issue, comment lines 48-50 of "kmStruct.R"
+    # if(control$warping == "kX"){
+    #   if(n.init < D + 1 && D + 1 < budget){
+    #     n.init <- D + 1
+    #   }else{
+    #     print("Budget too small for warping kX, need at least D+2")
+    #   }
+    # }
   }else{
     n.init <- 0 # For update error consistency
   }
