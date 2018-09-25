@@ -15,6 +15,7 @@ for(case in 1:7){
   # Global options
   nrep <- 25
   popsize <- 80
+  gen <- 40
   roll <- T
   
   if(case == 1 || case == 6){
@@ -118,8 +119,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kY', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kY', testU = FALSE, standard = TRUE, popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   tsY <- difftime(Sys.time(), tsY, units = "sec")
@@ -134,8 +136,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'standard', reverse = FALSE, warping = 'kX', testU = FALSE, standard = TRUE, popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   tsX <- difftime(Sys.time(), tsX, units = "sec")
@@ -151,8 +154,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'standard', reverse = FALSE, warping = 'Psi', testU = FALSE, standard = TRUE, popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'standard', reverse = FALSE, warping = 'Psi', testU = FALSE, standard = TRUE, popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   tsP <- difftime(Sys.time(), tsP, units = "sec")
@@ -166,8 +170,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'Psi', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'Psi', testU = TRUE, standard = FALSE,  popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   trP <- difftime(Sys.time(), trP, units = "sec")
@@ -181,8 +186,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kY', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kY', testU = TRUE, standard = FALSE,  popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   trY <- difftime(Sys.time(), trY, units = "sec")
@@ -197,8 +203,9 @@ for(case in 1:7){
     set.seed(i)
     res <- easyREMBO(par = runif(d), fn = ftest, budget = budget, lower = lower, upper = upper,
                      ii = mat_effective[i,],
-                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = 40,
-                                    inneroptim = "StoSOO", covtype = covtype, roll = roll))
+                     control = list(Atype = 'Gaussian', reverse = TRUE, warping = 'kX', testU = TRUE, standard = FALSE,  popsize = popsize, gen = gen,
+                                    inneroptim = "StoSOO", roll = roll),
+                     kmcontrol = list(covtype = covtype))
     res$y
   }
   trX <- difftime(Sys.time(), trX, units = "sec")
