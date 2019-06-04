@@ -32,7 +32,7 @@
 ##' \item \code{popsize, gen} population size and number of optimization generations of EI
 ##' }
 ##' @importFrom GPareto plotParetoEmp
-##' @importFrom eaf is.nondominated
+##' @importFrom eaf is_nondominated
 ##' @importFrom GPareto crit_EHI
 ##' @export
 ##' @examples
@@ -49,7 +49,7 @@
 ##' n.grid <- 101
 ##' test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
 ##' response.grid <- t(apply(test.grid, 1, P1))
-##' PFref <- response.grid[is.nondominated(response.grid),]
+##' PFref <- response.grid[is_nondominated(response.grid),]
 ##' 
 ##' ii <- c(1,2)
 ##' P1_mod <- function(X){
@@ -268,7 +268,7 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = list(di
   }
   
   # best value so far, slightly perturbed, to increase exploitation in EI optimization
-  ind <- is.nondominated(fvalues)
+  ind <- is_nondominated(fvalues)
   PF <- fvalues[ind,]
   spartan <- DoE[ind,,drop = F] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
   spartan <- t(apply(spartan, 1, function(x)  pmin(boundsEIopt, pmax(-boundsEIopt, x))))
@@ -341,7 +341,7 @@ multiREMBO <- function(par, fn, lower, upper, budget, ..., critcontrol = list(di
     DoE <- rbind(DoE, newX)
     design <- rbind(design, newDesign)
     
-    ind <- is.nondominated(fvalues)
+    ind <- is_nondominated(fvalues)
     PF <- fvalues[ind,]
     spartan <- DoE[ind,,drop = F] + matrix(rnorm(d*nrow(PF), sd = 0.05), nrow(PF))
     spartan <- t(apply(spartan, 1, function(x)  pmin(boundsEIopt, pmax(-boundsEIopt, x))))

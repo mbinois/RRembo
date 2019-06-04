@@ -72,7 +72,7 @@ maxEval <- 100
 n.grid <- 101
 test.grid <- expand.grid(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid))
 response.grid <- t(apply(test.grid, 1, P1))
-PFref <- response.grid[is.nondominated(response.grid),]
+PFref <- response.grid[is_nondominated(response.grid),]
 
 ii <- c(1,2)
 P1_mod <- function(X){
