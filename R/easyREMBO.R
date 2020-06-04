@@ -181,7 +181,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   }
   
   # Number of points of the DoE
-  if(is.null(init$low_dim_design)){
+  if(is.null(init$n) && is.null(init$low_dim_design)){
     n.init <- max(4 * d, round(budget/3))
     ## This is a DiceKriging issue, comment lines 48-50 of "kmStruct.R"
     # if(control$warping == "kX"){
@@ -192,7 +192,8 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     #   }
     # }
   }else{
-    n.init <- 0 # For update error consistency
+    if(!is.null(init$n) n.init <- init$n)
+    if(!is.null(init$low_dim_design) n.init <- 0 # For update error consistency
   }
   
   if(control$reverse){
