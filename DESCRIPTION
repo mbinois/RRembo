@@ -24,4 +24,4 @@ Imports:
   eaf (>= 1.9)
 Suggests:
   rgl
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0

@@ -192,8 +192,8 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     #   }
     # }
   }else{
-    if(!is.null(init$n) n.init <- init$n)
-    if(!is.null(init$low_dim_design) n.init <- 0 # For update error consistency
+    if(!is.null(init$n)) n.init <- init$n
+    if(!is.null(init$low_dim_design)) n.init <- 0 # For update error consistency
   }
   
   if(control$reverse){
