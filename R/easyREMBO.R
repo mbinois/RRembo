@@ -116,8 +116,12 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     A <- init$Amat
   }
   
-  if(d == D)
+  if(d == D){
     A <- diag(D)
+    control$bxsize <- 1
+    bxsize <- 1
+  }
+    
   
   tA <- t(A)
   
@@ -225,8 +229,12 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
   
   design <- map(DoE, A)
   
-  model <- km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,
-              control = list(trace = FALSE))
+  model <- try(km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,
+              control = list(trace = FALSE)))
+  if(class(model) == "try-error"){
+    model <- km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,
+                control = list(trace = FALSE), nugget.estim = T)
+  }
   
   # Expected Improvement function in the REMBO case
   # Not evaluated and penalized if not in U/Z or
