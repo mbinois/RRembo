@@ -88,21 +88,21 @@ hartman6_mod_log <- function(x, ii = c(1,2,3,4,5,6)){
 ##' cola(xstar) # 11.7464
 ##' 
 cola <- function(x){
-
+  
   # Solution in original space
   # xstar <- c(0.651906, 1.30194, 0.099242, -0.883791, -0.8796, 0.204651, -3.28414, 0.851188, -3.46245,
   #          2.53245, -0.895246, 1.40992, -3.07367, 1.96257, -2.97872, -0.807849, -1.68978)
-
+  
   if(length(x) != 17) warning("Input dimension of x is not 17\n")
-
+  
   u <- x
   x <- y <- rep(0, 10)
   x[2] <- u[1]*4
   x[3:10] <- u[seq(2, 17, by = 2)]*8 - 4
   y[3:10] <- u[seq(3, 17, by = 2)]*8 - 4
-
+  
   r <- sqrt(outer(x, x, "-")^2 + outer(y, y, "-")^2)
-
+  
   dmat <- matrix(c(1.27, 1.69, 2.04, 3.09, 3.20, 2.86, 3.17, 3.21, 2.38,
                    1.69, 1.43, 2.35, 3.18, 3.22, 2.56, 3.18, 3.18, 2.31,
                    2.04, 2.35, 2.43, 3.26, 3.27, 2.58, 3.18, 3.18, 2.42,
@@ -112,9 +112,9 @@ cola <- function(x){
                    3.17, 3.18, 3.18, 3.12, 1.31, 1.64, 3.00, 2.95, 2.56,
                    3.21, 3.18, 3.18, 3.17, 1.70, 1.36, 2.95, 1.32, 2.91,
                    2.38, 2.31, 2.42, 1.94, 2.85, 2.81, 2.56, 2.91, 2.97), 9)
-
+  
   res <- sum((dmat[lower.tri(dmat, diag = T)] - r[lower.tri(r)])^2)
-
+  
   return(res)
 }
 
@@ -133,9 +133,9 @@ giunta <- function(x, ii = NULL){
   if(is.null(dim(x))) x <- matrix(x, nrow = 1)
   if(is.null(ii)) ii <- 1:ncol(x)
   x <- x*2 - 1
-
+  
   tmp <- sin(16/15*x[,ii, drop = F] - 1) + sin(16/15 * x[,ii, drop = F] - 1)^2 + 1/50 * sin(4*(16/15 * x[,ii, drop = F] -1))
-
+  
   return(0.6 + rowSums(tmp))
 }
 
@@ -168,3 +168,28 @@ levy <- function(x, ii = NULL){
   y <- term1 + sum + term3
   return(y)
 }
+
+##' Styblinski-Tang function (nD)
+##' @title Styblinski-Tang function
+##' @export
+##' @rdname Test_functions
+##' @examples 
+##' # Styblinski-Tang function
+##' xstar <- rep(0.2096466, 10)
+##' styb(xstar) # -39.16599 * 10
+##' 
+##' @details Styblinski-Tang function function adapted from the code of Sonja Surjanovic and Derek Bingham
+##' and available at https://www.sfu.ca/~ssurjano/levy.html.
+styb <- function(x, ii = NULL){
+  if(is.null(dim(x))) x <- matrix(x, nrow = 1)
+  if(is.null(ii)) ii <- 1:ncol(x)
+  
+  x <- x * 10 - 5
+  
+  sum <- rowSums(x^4 - 16*x^2 + 5*x)
+  
+  y <- sum/2
+  return(y)
+}
+
+
