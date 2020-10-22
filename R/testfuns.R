@@ -1,27 +1,27 @@
-##' Test functions adapted for the Rembo problem, i.e., possibly with non-active variables. All are defined in the [0,1]^d hypercube.\cr \cr
-##' Implemented functions:\cr
-##' Sphere function (Euclidean distance to given optimum) (nD)
-##' @title Test function
-##' @param x vector of input location, or, for \code{sphere} and \code{giunta}, matrix specifying locations where the function is to be evaluated, one point per row.
-##' @param x0 optimum in the effective space (same length as \code{ii})
-##' @param ii effective dimensions indices
+#' Test functions adapted for the Rembo problem, i.e., possibly with non-active variables. All are defined in the [0,1]^d hypercube.\cr \cr
+#' Implemented functions:\cr
+#' Sphere function (Euclidean distance to given optimum) (nD)
+#' @title Test function
+#' @param x vector of input location, or, for \code{sphere} and \code{giunta}, matrix specifying locations where the function is to be evaluated, one point per row.
+#' @param x0 optimum in the effective space (same length as \code{ii})
+#' @param ii effective dimensions indices
 ## ' @return euclidean distance between x0[,ii] and x[,ii]
-##' @rdname Test_functions
-##' @export
-##' @examples
-##' ## Sphere function example
-##' set.seed(35)
-##' n <- 101
-##' d <- 2
-##' D <- 3
-##'
-##' ygrid <- seq(-3,3, length.out = n)
-##' Y <- as.matrix(expand.grid(ygrid, ygrid))
-##' A <- selectA(d, D)
-##' opt <- c(0.5,0.5)
-##' fgrid <- sphere(randEmb(Y, A), x0 = opt, ii = c(1,2))
-##' filled.contour(ygrid, ygrid, matrix(fgrid, n), color = terrain.colors)
-##' 
+#' @rdname Test_functions
+#' @export
+#' @examples
+#' ## Sphere function example
+#' set.seed(35)
+#' n <- 101
+#' d <- 2
+#' D <- 3
+#'
+#' ygrid <- seq(-3,3, length.out = n)
+#' Y <- as.matrix(expand.grid(ygrid, ygrid))
+#' A <- selectA(d, D)
+#' opt <- c(0.5,0.5)
+#' fgrid <- sphere(randEmb(Y, A), x0 = opt, ii = c(1,2))
+#' filled.contour(ygrid, ygrid, matrix(fgrid, n), color = terrain.colors)
+#' 
 sphere <- function(x, x0, ii){
   if(is.null(nrow(x)))
     x <- matrix(x, nrow = 1)
@@ -29,14 +29,14 @@ sphere <- function(x, x0, ii){
 }
 
 
-##' Branin function (2D)
+#' Branin function (2D)
 ## ' @title Branin function for high dim tests
 ## ' @param x where to test
 ## ' @param ii indices of x to consider
-##' @export
-##' @rdname Test_functions
-##' @importFrom DiceKriging branin
-##' @seealso \code{\link[DiceKriging]{branin}} and \code{\link[DiceKriging]{hartman6}} for the original \code{branin} and \code{hartman6} functions.
+#' @export
+#' @rdname Test_functions
+#' @importFrom DiceKriging branin
+#' @seealso \code{\link[DiceKriging]{branin}} and \code{\link[DiceKriging]{hartman6}} for the original \code{branin} and \code{hartman6} functions.
 branin_mod <- function(x, ii = c(1,2)){
   if(is.null(nrow(x))){
     x <- matrix(x, nrow = 1)
@@ -44,13 +44,13 @@ branin_mod <- function(x, ii = c(1,2)){
   return(apply(x[, c(ii[1], ii[2]), drop  = F], 1, branin))
 }
 
-##' Hartman6 function (6D)
+#' Hartman6 function (6D)
 ## ' @title Hartman6 function for high dim tests
 ## ' @param x where to test
 ## ' @param ii indices of x to consider
-##' @export
-##' @importFrom DiceKriging hartman6
-##' @rdname Test_functions
+#' @export
+#' @importFrom DiceKriging hartman6
+#' @rdname Test_functions
 hartman6_mod <- function(x, ii = c(1,2,3,4,5,6)){
   if(is.null(nrow(x)))
     x <- matrix(x, nrow = 1)
@@ -58,14 +58,14 @@ hartman6_mod <- function(x, ii = c(1,2,3,4,5,6)){
 }
 
 
-##' Hartman6 function (Jones version, 6D)
+#' Hartman6 function (Jones version, 6D)
 ## ' @title Hartman6 function for high dim tests (Jones Version)
 ## ' @param x where to test
 ## ' @param ii indices of x to consider
-##' @export
-##' @references 
-##' D. R. Jones, M. Schonlau, W. Welch (1998),  Efficient global optimization of expensive black-box functions
-##' @rdname Test_functions
+#' @export
+#' @references 
+#' D. R. Jones, M. Schonlau, W. Welch (1998),  Efficient global optimization of expensive black-box functions
+#' @rdname Test_functions
 hartman6_mod_log <- function(x, ii = c(1,2,3,4,5,6)){
   if(is.null(nrow(x)))
     x <- matrix(x, nrow = 1)
@@ -73,20 +73,20 @@ hartman6_mod_log <- function(x, ii = c(1,2,3,4,5,6)){
 }
 
 
-##' Cola function (17D)
-##' @title Cola function for high dim tests
+#' Cola function (17D)
+#' @title Cola function for high dim tests
 ## ' @param x input vector of dimension 17 in [0, 1]
-##' @export
-##' @rdname Test_functions
-##' @references
-##' Madsen, Kaj, and Julius Zilinskas. Testing branch-and-bound methods for global optimization. IMM, Department of Mathematical Modelling, Technical Universityof Denmark, 2000.
-##' @examples
-##' # cola function
-##' xstar <- c(0.1629765, 0.6627425, 0.51240525, 0.38952613, 0.39005, 0.52558138, 0.0894825,
-##'            0.6063985, 0.06719375, 0.81655625, 0.38809425, 0.67624, 0.11579125,
-##'            0.74532125, 0.12766, 0.39901887, 0.2887775)
-##' cola(xstar) # 11.7464
-##' 
+#' @export
+#' @rdname Test_functions
+#' @references
+#' Madsen, Kaj, and Julius Zilinskas. Testing branch-and-bound methods for global optimization. IMM, Department of Mathematical Modelling, Technical Universityof Denmark, 2000.
+#' @examples
+#' # cola function
+#' xstar <- c(0.1629765, 0.6627425, 0.51240525, 0.38952613, 0.39005, 0.52558138, 0.0894825,
+#'            0.6063985, 0.06719375, 0.81655625, 0.38809425, 0.67624, 0.11579125,
+#'            0.74532125, 0.12766, 0.39901887, 0.2887775)
+#' cola(xstar) # 11.7464
+#' 
 cola <- function(x){
   
   # Solution in original space
@@ -118,17 +118,17 @@ cola <- function(x){
   return(res)
 }
 
-##' Giunta function (nD)
-##' @title Giunta function
+#' Giunta function (nD)
+#' @title Giunta function
 ## ' @param x where to test in [0, 1]^D
 ## ' @param ii indices of x to consider
-##' @export
-##' @rdname Test_functions
-##' @examples 
-##' # Giunta function
-##' xstar <- c(0.73366, 0.73366)
-##' giunta(xstar) # 0.06447042
-##' 
+#' @export
+#' @rdname Test_functions
+#' @examples 
+#' # Giunta function
+#' xstar <- c(0.73366, 0.73366)
+#' giunta(xstar) # 0.06447042
+#' 
 giunta <- function(x, ii = NULL){
   if(is.null(dim(x))) x <- matrix(x, nrow = 1)
   if(is.null(ii)) ii <- 1:ncol(x)
@@ -139,17 +139,17 @@ giunta <- function(x, ii = NULL){
   return(0.6 + rowSums(tmp))
 }
 
-##' Levy function (nD)
-##' @title Levy function
-##' @export
-##' @rdname Test_functions
-##' @examples 
-##' # Levy function
-##' xstar <- rep(0.55, 10)
-##' levy(xstar) # 0
-##' 
-##' @details Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
-##' and available at https://www.sfu.ca/~ssurjano/levy.html.
+#' Levy function (nD)
+#' @title Levy function
+#' @export
+#' @rdname Test_functions
+#' @examples 
+#' # Levy function
+#' xstar <- rep(0.55, 10)
+#' levy(xstar) # 0
+#' 
+#' @details Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
+#' and available at https://www.sfu.ca/~ssurjano/levy.html.
 levy <- function(x, ii = NULL){
   if(is.null(dim(x))) x <- matrix(x, nrow = 1)
   if(is.null(ii)) ii <- 1:ncol(x)
@@ -169,17 +169,17 @@ levy <- function(x, ii = NULL){
   return(y)
 }
 
-##' Styblinski-Tang function (nD)
-##' @title Styblinski-Tang function
-##' @export
-##' @rdname Test_functions
-##' @examples 
-##' # Styblinski-Tang function
-##' xstar <- rep(0.2096466, 10)
-##' styb(xstar) # -39.16599 * 10
-##' 
-##' @details Styblinski-Tang function function adapted from the code of Sonja Surjanovic and Derek Bingham
-##' and available at https://www.sfu.ca/~ssurjano/levy.html.
+#' Styblinski-Tang function (nD)
+#' @title Styblinski-Tang function
+#' @export
+#' @rdname Test_functions
+#' @examples 
+#' # Styblinski-Tang function
+#' xstar <- rep(0.2096466, 10)
+#' styb(xstar) # -39.16599 * 10
+#' 
+#' @details Styblinski-Tang function function adapted from the code of Sonja Surjanovic and Derek Bingham
+#' and available at https://www.sfu.ca/~ssurjano/levy.html.
 styb <- function(x, ii = NULL){
   if(is.null(dim(x))) x <- matrix(x, nrow = 1)
   if(is.null(ii)) ii <- 1:ncol(x)
