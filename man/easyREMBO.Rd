@@ -4,12 +4,19 @@
 \alias{easyREMBO}
 \title{Random Embedding Bayesian Optimization}
 \usage{
-easyREMBO(par, fn, lower, upper, budget, ..., kmcontrol = list(covtype =
-  "matern5_2", iso = TRUE, covreestim = TRUE, formula = ~1),
-  control = list(Atype = "isotropic", reverse = TRUE, bxsize = NULL,
-  testU = TRUE, standard = FALSE, maxitOptA = 100, lightreturn = FALSE,
-  warping = "Psi", designtype = "unif", tcheckP = 1e-05, roll = F,
-  inneroptim = "pso", popsize = 80, gen = 40), init = NULL)
+easyREMBO(
+  par,
+  fn,
+  lower,
+  upper,
+  budget,
+  ...,
+  kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula = ~1),
+  control = list(Atype = "isotropic", reverse = TRUE, bxsize = NULL, testU = TRUE,
+    standard = FALSE, maxitOptA = 100, lightreturn = FALSE, warping = "Psi", designtype =
+    "unif", tcheckP = 1e-05, roll = F, inneroptim = "pso", popsize = 80, gen = 40),
+  init = NULL
+)
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}
@@ -77,7 +84,7 @@ for(i in 1:ntest){
   sol <- easyREMBO(par = rep(NA, lowd), branin_mod2, lower = rep(0, highD),
                    upper = rep(1, highD), budget = maxEval)
   res[i] <- sol$value
-  cat(sol$value, " ", i, "\\n")
+  cat(sol$value, " ", i, "\n")
 }
 
 plot(res - 0.397887, type = "b")

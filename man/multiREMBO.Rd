@@ -4,13 +4,20 @@
 \alias{multiREMBO}
 \title{Random Embedding Bayesian Optimization}
 \usage{
-multiREMBO(par, fn, lower, upper, budget, ...,
+multiREMBO(
+  par,
+  fn,
+  lower,
+  upper,
+  budget,
+  ...,
   critcontrol = list(distance = "euclidean", threshold = 1e-04),
-  kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE,
-  formula = ~1), control = list(Atype = "isotropic", reverse = TRUE,
-  bxsize = NULL, testU = TRUE, standard = FALSE, maxitOptA = 100,
-  lightreturn = FALSE, warping = "Psi", designtype = "unif", roll = F,
-  inneroptim = "pso", popsize = 80, gen = 40), init = NULL)
+  kmcontrol = list(covtype = "matern5_2", covreestim = TRUE, iso = TRUE, formula = ~1),
+  control = list(Atype = "isotropic", reverse = TRUE, bxsize = NULL, testU = TRUE,
+    standard = FALSE, maxitOptA = 100, lightreturn = FALSE, warping = "Psi", designtype =
+    "unif", roll = F, inneroptim = "pso", popsize = 80, gen = 40),
+  init = NULL
+)
 }
 \arguments{
 \item{par}{vector whose length is used to define the initial DoE or just the low dimension}

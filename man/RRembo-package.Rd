@@ -24,7 +24,7 @@ maxEval <- 100
 ii <- sample(1:highD, 2)
 sol <- easyREMBO(par = rep(NA, lowd), branin_mod, ii = ii, lower = rep(0, highD),
                    upper = rep(1, highD), budget = maxEval)
-cat(sol$value, "\\n")
+cat(sol$value, "\n")
 }
 }
 \references{

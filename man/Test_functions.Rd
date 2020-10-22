@@ -8,6 +8,7 @@
 \alias{cola}
 \alias{giunta}
 \alias{levy}
+\alias{styb}
 \title{Test function}
 \usage{
 sphere(x, x0, ii)
@@ -23,6 +24,8 @@ cola(x)
 giunta(x, ii = NULL)
 
 levy(x, ii = NULL)
+
+styb(x, ii = NULL)
 }
 \arguments{
 \item{x}{vector of input location, or, for \code{sphere} and \code{giunta}, matrix specifying locations where the function is to be evaluated, one point per row.}
@@ -41,9 +44,14 @@ Cola function (17D)
 Giunta function (nD)
 
 Levy function (nD)
+
+Styblinski-Tang function (nD)
 }
 \details{
 Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
+and available at https://www.sfu.ca/~ssurjano/levy.html.
+
+Styblinski-Tang function function adapted from the code of Sonja Surjanovic and Derek Bingham
 and available at https://www.sfu.ca/~ssurjano/levy.html.
 }
 \examples{
@@ -73,6 +81,10 @@ giunta(xstar) # 0.06447042
 # Levy function
 xstar <- rep(0.55, 10)
 levy(xstar) # 0
+
+# Styblinski-Tang function
+xstar <- rep(0.2096466, 10)
+styb(xstar) # -39.16599 * 10
 
 }
 \references{
