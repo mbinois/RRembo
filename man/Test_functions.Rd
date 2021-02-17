@@ -3,6 +3,7 @@
 \name{sphere}
 \alias{sphere}
 \alias{branin_mod}
+\alias{branin2_mod}
 \alias{hartman6_mod}
 \alias{hartman6_mod_log}
 \alias{cola}
@@ -14,6 +15,8 @@
 sphere(x, x0, ii)
 
 branin_mod(x, ii = c(1, 2))
+
+branin2_mod(x, ii = c(1, 2))
 
 hartman6_mod(x, ii = c(1, 2, 3, 4, 5, 6))
 
@@ -48,6 +51,8 @@ Levy function (nD)
 Styblinski-Tang function (nD)
 }
 \details{
+Modified Branin function to have a single optimum, see [Forrester et al., (2008)].
+
 Levy function adapted from the code of Sonja Surjanovic and Derek Bingham
 and available at https://www.sfu.ca/~ssurjano/levy.html.
 
@@ -67,6 +72,10 @@ A <- selectA(d, D)
 opt <- c(0.5,0.5)
 fgrid <- sphere(randEmb(Y, A), x0 = opt, ii = c(1,2))
 filled.contour(ygrid, ygrid, matrix(fgrid, n), color = terrain.colors)
+
+# Modified branin
+xstar <- c(0.08738062, 0.90866704)
+branin2_mod(xstar) # -16.64402
 
 # cola function
 xstar <- c(0.1629765, 0.6627425, 0.51240525, 0.38952613, 0.39005, 0.52558138, 0.0894825,
@@ -88,6 +97,8 @@ styb(xstar) # -39.16599 * 10
 
 }
 \references{
+A. Forrester, A. Sobester, A. Keane (2008), Engineering design via surrogate modelling: a practical guide John Wiley \& Sons, 2008.
+
 D. R. Jones, M. Schonlau, W. Welch (1998),  Efficient global optimization of expensive black-box functions
 
 Madsen, Kaj, and Julius Zilinskas. Testing branch-and-bound methods for global optimization. IMM, Department of Mathematical Modelling, Technical Universityof Denmark, 2000.

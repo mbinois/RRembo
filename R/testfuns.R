@@ -44,6 +44,24 @@ branin_mod <- function(x, ii = c(1,2)){
   return(apply(x[, c(ii[1], ii[2]), drop  = F], 1, branin))
 }
 
+#' @export
+#' @rdname Test_functions
+#' @references A. Forrester, A. Sobester, A. Keane (2008), Engineering design via surrogate modelling: a practical guide John Wiley \& Sons, 2008.
+#' @details Modified Branin function to have a single optimum, see [Forrester et al., (2008)].
+#' @examples 
+#' # Modified branin
+#' xstar <- c(0.08738062, 0.90866704)
+#' branin2_mod(xstar) # -16.64402
+#' 
+branin2_mod <- function(x, ii = c(1,2)){
+  if(is.null(nrow(x))){
+    x <- matrix(x, nrow = 1)
+  }
+  x1 <- x[,1] * 15 - 5
+  x2 <- x[,2] * 15
+  return((x2 - 5.1/(4 * pi^2) * (x1^2) + 5/pi * x1 - 6)^2 + 10 * (1 - 1/(8 * pi)) * cos(x1) + 10 + 5 * x1)
+}
+
 #' Hartman6 function (6D)
 ## ' @title Hartman6 function for high dim tests
 ## ' @param x where to test
