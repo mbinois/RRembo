@@ -6,6 +6,9 @@
 ##' @param lower,upper bounds for optimization
 ##' @param budget total number of calls to the objective function
 ##' @param highDimGP should the GP use true design values?
+# #' @param NashSearch should the search for the optimum be a Nash equilibrium for EI vs AS criterion?
+# #' @param NashOptions list with parameters: \code{ns} the vector giving the number of strategies for EI and AS, respectively. 
+# #' Note: the maximum of EI is added by default.
 ##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
 ##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
@@ -75,7 +78,7 @@
 ##' plot(res - 0.397887, type = "b")
 ##' boxplot(res - 0.397887)
 ##' }
-activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP,
+activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
                         homcontrol = list(beta0 = 0, covtype = "Matern5_2"),
                         kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                         control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
@@ -259,6 +262,38 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP,
     if(opt$value <= 0){ # no improvement found or not even in domain
       cat("No improvement or not even in Z \n")
     }
+    
+    # if(NashSearch){
+    #   
+    #   if(max(abs((range(t(A) %*% A - diag(ncol(A)))))) > 1e-10) print("A is expected to have orthonormal columns but it does not seem to be the case here")
+    #   
+    #   ## Define set of strategies with territory splitting: EI is given variable on the AS, AS is given the orthogonal
+    #   X_EI <- matrix(runif(NashOptions$ns[1] * D), ncol = D) * 2 - 1
+    #   
+    #   
+    #   
+    #   # Basis for the orthogonal complement of A (i.e., W)
+    #   W <- orthonormalization(A, basis = TRUE,norm = TRUE)[,-c(1:d),drop = F]
+    #   # X_AS <- designZ(p = NashOptions$ns[2], pA = t(W), bxsize = sqrt(D), type = "unif")
+    #   X_AS <- matrix(runif(NashOptions$ns[2] * D), ncol = D) * 2 - 1
+    #   
+    #   
+    #   ## Add minimum of EI in alternatives
+    #   X_EI <- rbind(X_EI, ((mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower)
+    #   X_AS <- rbind(X_AS, ((mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower)
+    #   
+    #   ## Get coordinates in original domain [-1,1]^D
+    #   expanded.indices <- expand.grid(seq(1, NashOptions$ns[1]), seq(1, NashOptions$ns[2]))
+    #   Xn <- cbind((X_EI %*% A)[expanded.indices[,1],, drop = F], (X_AS %*% W)[expanded.indices[,2],, drop = F])
+    #   Xn <- Xn %*% t(cbind(A, W))
+    #   
+    #   # plot3d(Xn)
+    #   # points3d((matrix(runif(2*1000), 1000) * 2 - 1) %*% t(A), col = "red")
+    #   
+    #   ## Identify points not outside of the domain
+    #   ids_in <- which(rowSums(apply(Xn, c(1,2), function(x) max(abs(x) > 1))) > 0)
+    #   
+    # }
     
     newX <- ((mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower
     newY <- fn(newX, ...)
