@@ -71,7 +71,7 @@ designU <- function(p, A, bxsize, type = "maximin", standard = FALSE){
 ##' @param p number of points of the design
 ##' @param pA orthogonal projection onto Ran(A) matrix
 ##' @param bxsize bounds of the domain
-##' @param type design type, one of "LHS", "maximin"
+##' @param type design type, one of "LHS", "maximin", "unif"
 ##' @author Mickael Binois
 ##' @references 
 ##' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr \cr
