@@ -13,7 +13,7 @@ designZ(p, pA, bxsize, type = "maximin")
 
 \item{bxsize}{bounds of the domain}
 
-\item{type}{design type, one of "LHS", "maximin"}
+\item{type}{design type, one of "LHS", "maximin", "unif"}
 }
 \description{
 Select design in Z

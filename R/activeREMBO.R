@@ -9,6 +9,7 @@
 # #' @param NashSearch should the search for the optimum be a Nash equilibrium for EI vs AS criterion?
 # #' @param NashOptions list with parameters: \code{ns} the vector giving the number of strategies for EI and AS, respectively. 
 # #' Note: the maximum of EI is added by default.
+##' @param useAScrit should an optimization on a sequential active subspace identification criterion be performed in the orthogonal? 
 ##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
 ##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
 ##' @param control an optional list of control parameters. See "Details"
@@ -39,6 +40,7 @@
 ##' @importFrom pso psoptim
 ##' @importFrom DEoptim DEoptim
 ##' @importFrom rgenoud genoud
+##' @importFrom graphics axis filled.contour points title
 ##' @import OOR
 ##' @author Mickael Binois
 ##' @export
@@ -78,7 +80,7 @@
 ##' plot(res - 0.397887, type = "b")
 ##' boxplot(res - 0.397887)
 ##' }
-activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
+activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit = FALSE, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
                         homcontrol = list(beta0 = 0, covtype = "Matern5_2"),
                         kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                         control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
@@ -296,6 +298,44 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, #NashSear
     # }
     
     newX <- ((mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower
+    
+    if(useAScrit){
+      
+      W_hat <- orthonormalization(A, basis = TRUE,norm = TRUE)[,-c(1:d),drop = F]
+      yEI <- (mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind)) %*% A_hat # solution in R^d of EI optimization
+      
+      #@param w component in the orthogonal space of A (dimension D - d)
+      #@param yEI solution of EI in [-1,1]^D project on ran(A) (dimension d)
+      #@param C AS matrix (see activegp)
+      #@param mval penalty to go back
+      af_ort <- function(w, yEI, C, A, W, mval = -10){
+        if(is.null(nrow(x)))
+          w <- matrix(w, nrow = 1)
+        
+        # recreate full x vector
+        x <- (matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE) + w) %*% t(cbind(A, W))
+        
+        inDomain <- (rowSums(apply(x, c(1,2), function(x) max(abs(x) > 1))) > 0)
+        
+        res <- rep(NA, nrow(x))
+        if(any(inDomain)){
+          res[inDomain] <- C_var(C, x[inDomain,,drop=F], grad = FALSE)
+        }
+        
+        if(any(!inDomain)) res[!inDomain] <- mval * apply(x[!inDomain,,drop = FALSE], 1, distance, x2 = 0)
+        
+        return(res)
+      }
+      
+      opt_af <- psoptim(parinit, fn = af_ort, lower = rep(-sqrt(D), D - d), upper = rep(sqrt(D), D - d),
+                        control = list(fnscale = -1, maxit = control$gen, s = control$popsize,
+                                       vectorize = T), model = model, C = C_hat, A = A_hat, W = W_hat, y_EI = yEI)
+      
+      newX <- (matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE) + opt_af$par) %*% t(cbind(A_hat, W_hat))
+      
+    }
+    
+    
     newY <- fn(newX, ...)
     
     fvalues <- c(fvalues, newY)
