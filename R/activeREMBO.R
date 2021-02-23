@@ -1,91 +1,91 @@
-##' REMBO for unconstrained problems, with changing embedding
-##' @title Random Embedding Bayesian Optimization
-##' @param par vector whose length is used to define the initial DoE or just the low dimension
-##' @param fn function to be minimized over
-##' @param ... additional parameters of fn
-##' @param lower,upper bounds for optimization
-##' @param budget total number of calls to the objective function
-##' @param highDimGP should the GP use true design values?
+#' REMBO for unconstrained problems, with changing embedding
+#' @title Random Embedding Bayesian Optimization
+#' @param par vector whose length is used to define the initial DoE or just the low dimension
+#' @param fn function to be minimized over
+#' @param ... additional parameters of fn
+#' @param lower,upper bounds for optimization
+#' @param budget total number of calls to the objective function
+#' @param highDimGP should the GP use true design values?
 # #' @param NashSearch should the search for the optimum be a Nash equilibrium for EI vs AS criterion?
 # #' @param NashOptions list with parameters: \code{ns} the vector giving the number of strategies for EI and AS, respectively. 
 # #' Note: the maximum of EI is added by default.
-##' @param useAScrit should an optimization on a sequential active subspace identification criterion be performed in the orthogonal? 
-##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
-##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
-##' @param control an optional list of control parameters. See "Details"
-##' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
-##' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
-##' @details Options available from \code{control} are:
-##' \itemize{
-##' \item \code{Atype} see \code{\link[RRembo]{selectA}};
-##' \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
-##'  otherwise the original mapping with convex projection;
-##' \item \code{bxsize} scalar controling the box size in the low-dimensional space;
-##' \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
-##' \item \code{standard} for using settings of the original REMBO method;
-##' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
-##' \item \code{lightreturn} only returns \code{par} and \code{value};
-##' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-##' \item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
-##'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
-##' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
-##' \item \code{roll} to alternate between optimization methods;
-##' \item \code{inneroptim} optimization method for EI
-##' \item \code{popsize, gen} population size and number of optimization generations of EI
-##' }
-##' @importFrom rgenoud genoud
-##' @importFrom DiceOptim EI
-##' @importFrom GPareto checkPredict
-##' @import DiceKriging
-##' @importFrom pso psoptim
-##' @importFrom DEoptim DEoptim
-##' @importFrom rgenoud genoud
-##' @importFrom graphics axis filled.contour points title
-##' @import OOR
-##' @author Mickael Binois
-##' @export
-##' @references
-##' O. Roustant, D. Ginsbourger & Y. Deville, DiceKriging, DiceOptim: Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization Journal of Statistical Software, 2012, 51, 1-55\cr \cr
-##' Z. Wang, F. Hutter, M. Zoghi, D. Matheson, N. de Freitas (2016), Bayesian Optimization in a Billion Dimensions via Random Embeddings, JAIR. \cr \cr
-##' M. Binois, D. Ginsbourger, O. Roustant (2015), A Warped Kernel Improving Robustness in Bayesian Optimization Via Random Embeddings, Learning and Intelligent Optimization, Springer \cr \cr
-##' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr \cr
-##' M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.
-##' @examples
-##' \dontrun{
-##' set.seed(42)
-##' library(rgl)
-##' library(DiceKriging)
-##'
-##' lowd <- 2
-##' highD <- 25
-##'
-##' ntest <- 50
-##' maxEval <- 100
-##'
-##' res <- rep(0, ntest)
-##' for(i in 1:ntest){
-##'   #ii <- sample(1:highD, 2)
-##'   ii <- c(1,2)
-##'   branin_mod2 <- function(X){
-##'     if(is.null(nrow(X))) X <- matrix(X, nrow = 1)
-##'     X <- X[, c(ii[1], ii[2]), drop = FALSE]
-##'     return(apply(X, 1, branin))
-##'   }
-##'   sol <- activeREMBO(par = rep(NA, lowd), branin_mod2, lower = rep(0, highD),
-##'                    upper = rep(1, highD), budget = maxEval, highDimGP = TRUE)
-##'   res[i] <- sol$value
-##'   cat(sol$value, " ", i, "\n")
-##' }
-##'
-##' plot(res - 0.397887, type = "b")
-##' boxplot(res - 0.397887)
-##' }
+#' @param useAScrit should an optimization on a sequential active subspace identification criterion be performed in the orthogonal? 
+#' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
+#' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
+#' @param control an optional list of control parameters. See "Details"
+#' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+#' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
+#' @details Options available from \code{control} are:
+#' \itemize{
+#' \item \code{Atype} see \code{\link[RRembo]{selectA}};
+#' \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
+#'  otherwise the original mapping with convex projection;
+#' \item \code{bxsize} scalar controling the box size in the low-dimensional space;
+#' \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
+#' \item \code{standard} for using settings of the original REMBO method;
+#' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
+#' \item \code{lightreturn} only returns \code{par} and \code{value};
+#' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
+#' \item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
+#'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
+#' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
+#' \item \code{roll} to alternate between optimization methods;
+#' \item \code{inneroptim} optimization method for EI
+#' \item \code{popsize, gen} population size and number of optimization generations of EI
+#' }
+#' @importFrom rgenoud genoud
+#' @importFrom DiceOptim EI
+#' @importFrom GPareto checkPredict
+#' @import DiceKriging
+#' @importFrom pso psoptim
+#' @importFrom DEoptim DEoptim
+#' @importFrom rgenoud genoud
+#' @importFrom graphics axis filled.contour points title
+#' @import OOR
+#' @author Mickael Binois
+#' @export
+#' @references
+#' O. Roustant, D. Ginsbourger & Y. Deville, DiceKriging, DiceOptim: Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization Journal of Statistical Software, 2012, 51, 1-55\cr \cr
+#' Z. Wang, F. Hutter, M. Zoghi, D. Matheson, N. de Freitas (2016), Bayesian Optimization in a Billion Dimensions via Random Embeddings, JAIR. \cr \cr
+#' M. Binois, D. Ginsbourger, O. Roustant (2015), A Warped Kernel Improving Robustness in Bayesian Optimization Via Random Embeddings, Learning and Intelligent Optimization, Springer \cr \cr
+#' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr \cr
+#' M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.
+#' @examples
+#' \dontrun{
+#' set.seed(42)
+#' library(rgl)
+#' library(DiceKriging)
+#'
+#' lowd <- 2
+#' highD <- 25
+#'
+#' ntest <- 50
+#' maxEval <- 100
+#'
+#' res <- rep(0, ntest)
+#' for(i in 1:ntest){
+#'   #ii <- sample(1:highD, 2)
+#'   ii <- c(1,2)
+#'   branin_mod2 <- function(X){
+#'     if(is.null(nrow(X))) X <- matrix(X, nrow = 1)
+#'     X <- X[, c(ii[1], ii[2]), drop = FALSE]
+#'     return(apply(X, 1, branin))
+#'   }
+#'   sol <- activeREMBO(par = rep(NA, lowd), branin_mod2, lower = rep(0, highD),
+#'                    upper = rep(1, highD), budget = maxEval, highDimGP = TRUE)
+#'   res[i] <- sol$value
+#'   cat(sol$value, " ", i, "\n")
+#' }
+#'
+#' plot(res - 0.397887, type = "b")
+#' boxplot(res - 0.397887)
+#' }
 activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit = FALSE, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
                         homcontrol = list(beta0 = 0, covtype = "Matern5_2"),
                         kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                         control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
                                        maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
-                                       tcheckP = 1e-5, roll = F,
+                                       tcheckP = 1e-3, roll = F,
                                        inneroptim = "pso", popsize = 80, gen = 40),
                         init = NULL){
   # Initialisation
@@ -105,7 +105,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   # if(is.null(control$designtype)) control$designtype <- 'unif'
   if(is.null(control$reverse)) control$reverse <- TRUE
   if(is.null(control$maxf)) control$maxf <- control$popsize * control$gen
-  if(is.null(control$tcheckP)) control$tcheckP <- 1e-4
+  if(is.null(control$tcheckP)) control$tcheckP <- 1e-3
   if(is.null(control$roll)) control$roll <- FALSE
   
   if(is.null(kmcontrol$covtype)) kmcontrol$covtype <- 'matern5_2'
@@ -203,8 +203,9 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
         
         if(highDimGP) xtmp <- mapZX(x[inDomain,], A_hat, Amat = Amat, Aind = Aind) else xtmp <- map(x[inDomain,], A_hat)
         
+  
         # identify too close points
-        tmp <- checkPredict(xtmp, list(model), control$tcheckP, distance = 'euclidean') 
+        tmp <- checkPredict(xtmp, list(model), control$tcheckP, distance = 'euclidean')
         
         res[inDomain[tmp]] <- 0
         if(any(!tmp)) res[inDomain[!tmp]] <- EI(x = xtmp[!tmp,], model = model, plugin = plugin)
@@ -301,19 +302,24 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
     
     if(useAScrit){
       
-      W_hat <- orthonormalization(A, basis = TRUE,norm = TRUE)[,-c(1:d),drop = F]
-      yEI <- (mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind)) %*% A_hat # solution in R^d of EI optimization
+      W_hat <- orthonormalization(A_hat, basis = TRUE,norm = TRUE)[,-c(1:d),drop = F]
+      yEI <- (newX * 2 - 1) %*% A_hat # solution in R^d of EI optimization
+      
+      # plot3d(((matrix((runif(1000*2) * 4 - 2),1000) %*% t(A_hat))))
+      # XXX <- NULL
       
       #@param w component in the orthogonal space of A (dimension D - d)
       #@param yEI solution of EI in [-1,1]^D project on ran(A) (dimension d)
       #@param C AS matrix (see activegp)
       #@param mval penalty to go back
       af_ort <- function(w, yEI, C, A, W, mval = -10){
-        if(is.null(nrow(x)))
+        if(is.null(nrow(w)))
           w <- matrix(w, nrow = 1)
         
         # recreate full x vector
-        x <- (matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE) + w) %*% t(cbind(A, W))
+        x <- cbind(matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE), w) %*% t(cbind(A, W))
+        # XXX <<- rbind(XXX, x)
+        x <- ((x + 1)/2)  %*% diag(upper - lower) + lower
         
         inDomain <- (rowSums(apply(x, c(1,2), function(x) max(abs(x) > 1))) > 0)
         
@@ -327,12 +333,19 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
         return(res)
       }
       
-      opt_af <- psoptim(parinit, fn = af_ort, lower = rep(-sqrt(D), D - d), upper = rep(sqrt(D), D - d),
+      opt_af <- psoptim(rep(NA, D-d), fn = af_ort, lower = rep(-sqrt(D), D - d), upper = rep(sqrt(D), D - d),
                         control = list(fnscale = -1, maxit = control$gen, s = control$popsize,
-                                       vectorize = T), model = model, C = C_hat, A = A_hat, W = W_hat, y_EI = yEI)
+                                       vectorize = T), C = C_hat, A = A_hat, W = W_hat, yEI = yEI)
       
-      newX <- (matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE) + opt_af$par) %*% t(cbind(A_hat, W_hat))
+      newX2 <- cbind(yEI, opt_af$par) %*% t(cbind(A_hat, W_hat))
+      newX2 <- pmin(1, pmax(-1, newX2))
+      newX2 <- ((newX2 + 1)/2) %*% diag(upper - lower) + lower
       
+      # Verif: the projection of newX2 should match the one of newX
+      # (newX * 2 - 1) %*% A_hat
+      # (newX2 * 2 - 1) %*% A_hat
+      
+      newX <- newX2
     }
     
     
@@ -401,7 +414,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
       filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
                      seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
                      matrix(EI_grid, 101),
-                     plot.axes = { axis(1); axis(2); points(opt$par, col = "blue", pch = 20) })
+                     plot.axes = { axis(1); axis(2); points(opt$par[1], opt$par[2], col = "blue", pch = 20) })
     }
     if(model@n %% 10 == 5){
       print(model@n)
@@ -463,83 +476,83 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   
 }
 
-##' REMBO for unconstrained problems, based on multi-objective way
-##' @title Random Embedding Bayesian Optimization
-##' @param par vector whose length is used to define the initial DoE or just the low dimension
-##' @param fn function to be minimized over
-##' @param ... additional parameters of fn
-##' @param lower,upper bounds for optimization
-##' @param budget total number of calls to the objective function
-##' @param highDimGP should the GP use true design values?
-##' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
-##' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
-##' @param control an optional list of control parameters. See "Details"
-##' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
-##' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
-##' @details Options available from \code{control} are:
-##' \itemize{
-##' \item \code{Atype} see \code{\link[RRembo]{selectA}};
-##' \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
-##'  otherwise the original mapping with convex projection;
-##' \item \code{bxsize} scalar controling the box size in the low-dimensional space;
-##' \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
-##' \item \code{standard} for using settings of the original REMBO method;
-##' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
-##' \item \code{lightreturn} only returns \code{par} and \code{value};
-##' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
-##' \item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
-##'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
-##' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
-##' \item \code{roll} to alternate between optimization methods;
-##' \item \code{inneroptim} optimization method for EI
-##' \item \code{popsize, gen} population size and number of optimization generations of EI
-##' }
-##' @importFrom rgenoud genoud
-##' @importFrom DiceOptim EI
-##' @importFrom GPareto checkPredict
-##' @import DiceKriging
-##' @importFrom pso psoptim
-##' @importFrom DEoptim DEoptim
-##' @importFrom rgenoud genoud
-##' @import OOR
-##' @author Mickael Binois
-##' @export
-##' @references
-##' O. Roustant, D. Ginsbourger & Y. Deville, DiceKriging, DiceOptim: Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization Journal of Statistical Software, 2012, 51, 1-55\cr \cr
-##' Z. Wang, F. Hutter, M. Zoghi, D. Matheson, N. de Freitas (2016), Bayesian Optimization in a Billion Dimensions via Random Embeddings, JAIR. \cr \cr
-##' M. Binois, D. Ginsbourger, O. Roustant (2015), A Warped Kernel Improving Robustness in Bayesian Optimization Via Random Embeddings, Learning and Intelligent Optimization, Springer \cr \cr
-##' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr \cr
-##' M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.
-##' @examples
-##' \dontrun{
-##' set.seed(42)
-##' library(rgl)
-##' library(DiceKriging)
-##'
-##' lowd <- 2
-##' highD <- 25
-##'
-##' ntest <- 50
-##' maxEval <- 100
-##'
-##' res <- rep(0, ntest)
-##' for(i in 1:ntest){
-##'   #ii <- sample(1:highD, 2)
-##'   ii <- c(1,2)
-##'   branin_mod2 <- function(X){
-##'     if(is.null(nrow(X))) X <- matrix(X, nrow = 1)
-##'     X <- X[, c(ii[1], ii[2]), drop = FALSE]
-##'     return(apply(X, 1, branin))
-##'   }
-##'   sol <- MactiveREMBO(par = rep(NA, lowd), branin_mod2, lower = rep(0, highD),
-##'                    upper = rep(1, highD), budget = maxEval, highDimGP = TRUE)
-##'   res[i] <- sol$value
-##'   cat(sol$value, " ", i, "\n")
-##' }
-##'
-##' plot(res - 0.397887, type = "b")
-##' boxplot(res - 0.397887)
-##' }
+#' REMBO for unconstrained problems, based on multi-objective way
+#' @title Random Embedding Bayesian Optimization
+#' @param par vector whose length is used to define the initial DoE or just the low dimension
+#' @param fn function to be minimized over
+#' @param ... additional parameters of fn
+#' @param lower,upper bounds for optimization
+#' @param budget total number of calls to the objective function
+#' @param highDimGP should the GP use true design values?
+#' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
+#' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
+#' @param control an optional list of control parameters. See "Details"
+#' @param init optional list with elements \code{Amat} to provide a random matrix, \code{low_dim_design} for an initial design in the low-dimensional space and \code{fvalues} for the corresponding response.
+#' When passing initial response values, care should be taken that the mapping with \code{Amat} of the design actually correspond to high-dimensional designs giving \code{fvalues}.
+#' @details Options available from \code{control} are:
+#' \itemize{
+#' \item \code{Atype} see \code{\link[RRembo]{selectA}};
+#' \item \code{reverse} if \code{TRUE}, use the new mapping from the zonotope,
+#'  otherwise the original mapping with convex projection;
+#' \item \code{bxsize} scalar controling the box size in the low-dimensional space;
+#' \item \code{testU} with the regular mapping, set to \code{TRUE} to check that points are in U (to avoid non-injectivity);
+#' \item \code{standard} for using settings of the original REMBO method;
+#' \item \code{maxitOptA} if \code{Atype} is \code{optimized}, number of optimization iterations;
+#' \item \code{lightreturn} only returns \code{par} and \code{value};
+#' \item \code{warping} either \code{"standard"} for kY, \code{"kX"} or \code{"Psi"};
+#' \item \code{designtype} one of "\code{LHS}", "\code{maximin}" and "\code{unif}",
+#'  see \code{\link[RRembo]{designZ}} or \code{\link[RRembo]{designU}};
+#' \item \code{tcheckP} minimal distance to an existing solution, see \code{\link[GPareto]{checkPredict}}
+#' \item \code{roll} to alternate between optimization methods;
+#' \item \code{inneroptim} optimization method for EI
+#' \item \code{popsize, gen} population size and number of optimization generations of EI
+#' }
+#' @importFrom rgenoud genoud
+#' @importFrom DiceOptim EI
+#' @importFrom GPareto checkPredict
+#' @import DiceKriging
+#' @importFrom pso psoptim
+#' @importFrom DEoptim DEoptim
+#' @importFrom rgenoud genoud
+#' @import OOR
+#' @author Mickael Binois
+#' @export
+#' @references
+#' O. Roustant, D. Ginsbourger & Y. Deville, DiceKriging, DiceOptim: Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization Journal of Statistical Software, 2012, 51, 1-55\cr \cr
+#' Z. Wang, F. Hutter, M. Zoghi, D. Matheson, N. de Freitas (2016), Bayesian Optimization in a Billion Dimensions via Random Embeddings, JAIR. \cr \cr
+#' M. Binois, D. Ginsbourger, O. Roustant (2015), A Warped Kernel Improving Robustness in Bayesian Optimization Via Random Embeddings, Learning and Intelligent Optimization, Springer \cr \cr
+#' M. Binois, D. Ginsbourger, O. Roustant (2018), On the choice of the low-dimensional domain for global optimization via random embeddings, arXiv:1704.05318 \cr \cr
+#' M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.
+#' @examples
+#' \dontrun{
+#' set.seed(42)
+#' library(rgl)
+#' library(DiceKriging)
+#'
+#' lowd <- 2
+#' highD <- 25
+#'
+#' ntest <- 50
+#' maxEval <- 100
+#'
+#' res <- rep(0, ntest)
+#' for(i in 1:ntest){
+#'   #ii <- sample(1:highD, 2)
+#'   ii <- c(1,2)
+#'   branin_mod2 <- function(X){
+#'     if(is.null(nrow(X))) X <- matrix(X, nrow = 1)
+#'     X <- X[, c(ii[1], ii[2]), drop = FALSE]
+#'     return(apply(X, 1, branin))
+#'   }
+#'   sol <- MactiveREMBO(par = rep(NA, lowd), branin_mod2, lower = rep(0, highD),
+#'                    upper = rep(1, highD), budget = maxEval, highDimGP = TRUE)
+#'   res[i] <- sol$value
+#'   cat(sol$value, " ", i, "\n")
+#' }
+#'
+#' plot(res - 0.397887, type = "b")
+#' boxplot(res - 0.397887)
+#' }
 MactiveREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, batch_size = 5,
                          homcontrol = list(beta0 = 0, covtype = "Matern5_2"),
                          kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
