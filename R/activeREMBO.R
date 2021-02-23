@@ -81,11 +81,11 @@
 #' boxplot(res - 0.397887)
 #' }
 activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit = FALSE, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
-                        homcontrol = list(beta0 = 0, covtype = "Matern5_2"),
+                        homcontrol = list(beta0 = 0, covtype = "Matern5_2", g = sqrt(.Machine$double.eps)),
                         kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                         control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
                                        maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
-                                       tcheckP = 1e-3, roll = F,
+                                       tcheckP = 1e-3, roll = F, returnAS = TRUE,
                                        inneroptim = "pso", popsize = 80, gen = 40),
                         init = NULL){
   # Initialisation
@@ -107,6 +107,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   if(is.null(control$maxf)) control$maxf <- control$popsize * control$gen
   if(is.null(control$tcheckP)) control$tcheckP <- 1e-3
   if(is.null(control$roll)) control$roll <- FALSE
+  if(is.null(control$returnAS)) control$returnAS <- TRUE
   
   if(is.null(kmcontrol$covtype)) kmcontrol$covtype <- 'matern5_2'
   if(is.null(kmcontrol$iso)) kmcontrol$iso <- TRUE
@@ -114,13 +115,15 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   if(is.null(kmcontrol$formula)) kmcontrol$formula <- ~1
   
   # Add for activeREMBO
-  if(is.null(homcontrol$known)) homcontrol$known <- list(beta0 = 0, g = 1e-6)
+  if(is.null(homcontrol$known)) homcontrol$known <- list(beta0 = 0, g = sqrt(.Machine$double.eps))
   if(is.null(homcontrol$covtype)) homcontrol$covtype <- "Matern5_2"
   if(is.null(homcontrol$lower)) homcontrol$lower <- rep(0.05, D)
   if(is.null(homcontrol$upper)) homcontrol$upper <- rep(2, D)
   if(is.null(homcontrol$init)) homcontrol$init <- list(theta = rep(0.5, D))
   if(highDimGP) nuggetestim <- FALSE else nuggetestim <- TRUE
   
+  # For monitoring
+  if(control$returnAS) ASs <- list()
   
   # Number of points of the DoE
   if(is.null(init$n)){
@@ -150,6 +153,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   tA <- t(A_hat)
   Amat <- cbind(A_hat, matrix(rep(c(1, 0), times = c(1, D-1)), D, D), matrix(rep(c(-1, 0), times = c(1, D-1)), D, D))
   Aind <- cbind(matrix(c(D, 1:D), D + 1, d), rbind(rep(1, D * 2), c(1:D, 1:D), matrix(0, D-1, D*2)))
+  if(control$returnAS) ASs <- c(ASs, A_hat)
   
   # Initial mapping
   if(control$warping == 'kX'){
@@ -203,7 +207,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
         
         if(highDimGP) xtmp <- mapZX(x[inDomain,], A_hat, Amat = Amat, Aind = Aind) else xtmp <- map(x[inDomain,], A_hat)
         
-  
+        
         # identify too close points
         tmp <- checkPredict(xtmp, list(model), control$tcheckP, distance = 'euclidean')
         
@@ -300,7 +304,9 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
     
     newX <- ((mapZX(opt$par, A_hat, Amat = Amat, Aind = Aind) + 1)/2) %*% diag(upper - lower) + lower
     
-    if(useAScrit){
+    is_on_border <- (any(newX < (lower + 1e-4)) || any(newX > upper - 1e-4)) # numerical instability on the edges
+    
+    if(useAScrit && !is_on_border){
       
       W_hat <- orthonormalization(A_hat, basis = TRUE,norm = TRUE)[,-c(1:d),drop = F]
       yEI <- (newX * 2 - 1) %*% A_hat # solution in R^d of EI optimization
@@ -320,36 +326,118 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
         x <- cbind(matrix(yEI, nrow = nrow(w), ncol = length(yEI), byrow = TRUE), w) %*% t(cbind(A, W))
         # XXX <<- rbind(XXX, x)
         x <- ((x + 1)/2)  %*% diag(upper - lower) + lower
-        
-        inDomain <- (rowSums(apply(x, c(1,2), function(x) max(abs(x) > 1))) > 0)
+        inDomain <- (rowSums(apply(x, c(1,2), function(x) max(abs(x) > 1))) == 0) # in [0,1]^D
         
         res <- rep(NA, nrow(x))
         if(any(inDomain)){
           res[inDomain] <- C_var(C, x[inDomain,,drop=F], grad = FALSE)
         }
-        
         if(any(!inDomain)) res[!inDomain] <- mval * apply(x[!inDomain,,drop = FALSE], 1, distance, x2 = 0)
-        
         return(res)
       }
       
       opt_af <- psoptim(rep(NA, D-d), fn = af_ort, lower = rep(-sqrt(D), D - d), upper = rep(sqrt(D), D - d),
                         control = list(fnscale = -1, maxit = control$gen, s = control$popsize,
-                                       vectorize = T), C = C_hat, A = A_hat, W = W_hat, yEI = yEI)
+                                       vectorize = F), C = C_hat, A = A_hat, W = W_hat, yEI = yEI)
       
-      newX2 <- cbind(yEI, opt_af$par) %*% t(cbind(A_hat, W_hat))
-      newX2 <- pmin(1, pmax(-1, newX2))
-      newX2 <- ((newX2 + 1)/2) %*% diag(upper - lower) + lower
+      if(opt_af$value < 0){
+        newX2 <- cbind(yEI, opt_af$par) %*% t(cbind(A_hat, W_hat))
+        newX2 <- pmin(1, pmax(-1, newX2))
+        newX2 <- ((newX2 + 1)/2) %*% diag(upper - lower) + lower
+        
+        # Verif: the projection of newX2 should match the one of newX
+        # (newX * 2 - 1) %*% A_hat
+        # (newX2 * 2 - 1) %*% A_hat
+        # if(all((newX * 2 - 1) %*% A_hat !=  (newX2 * 2 - 1) %*% A_hat)){
+        #   cat("toto \n")
+        # }
+        # tmp <- try(testthat::expect_equal((newX * 2 - 1) %*% A_hat,  (newX2 * 2 - 1) %*% A_hat, tol = 1e-6))
+        if(max(abs(((newX * 2 - 1) %*% A_hat) -  ((newX2 * 2 - 1) %*% A_hat))) <= 1e-2) newX <- newX2 # there are numerical problems on edges
+      }
       
-      # Verif: the projection of newX2 should match the one of newX
-      # (newX * 2 - 1) %*% A_hat
-      # (newX2 * 2 - 1) %*% A_hat
-      
-      newX <- newX2
     }
     
+    ## Graphs
+    if(model@n %% 10 == 0){
+      # print(model@n)
+      plot(modelD)
+    }
+    if(model@n %% 10 == 2 && d == 2){
+      X_grid <- as.matrix(expand.grid(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                                      seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101)))
+      EI_grid <- apply(X_grid, 1, EI_Rembo, model = model)
+      
+      if(highDimGP){
+        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
+                       matrix(EI_grid, 101), main = "EI",
+                       plot.axes = {axis(1); axis(2); points(opt$par[1], opt$par[2], col = "blue", pch = 20)})
+      }else{
+        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
+                       matrix(EI_grid, 101), main = "EI",
+                       plot.axes = {axis(1); axis(2); points(ortProj(DoE * 2 - 1, tA), pch = 17, col = "blue");
+                         points(opt$par[1], opt$par[2], col = "red", pch = 20)})
+      }
+    }
+    
+    if(useAScrit && !is_on_border && model@n %%10 == 3 && (D - d <= 2)){
+      if((D - d) == 1){
+        xgrid <- seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101)
+        AF_grid <- sapply(xgrid, af_ort, C = C_hat, A = A_hat, W = W_hat, yEI = yEI)
+        plot(xgrid, AF_grid, main = "AS crit")
+        
+      }
+      if((D - d) == 2){
+        X_grid <- as.matrix(expand.grid(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                                        seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101)))
+        AF_grid <- apply(X_grid, 1, af_ort, C = C_hat, A = A_hat, W = W_hat, yEI = yEI)
+        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
+                       matrix(AF_grid, 101), main = "AS crit",
+                       plot.axes = {axis(1); axis(2); points(opt_af$par[1], opt_af$par[2], col = "blue", pch = 20)})
+      }
+    }
+    
+    if(model@n %% 10 == 5){
+      # print(model@n)
+      plot(model)
+    }
+    # if(model@n %% 10 == 7){ # only for Regular Branin with dummy variables
+    #   plot(DoE[,1:2])
+    #   points(DoE[which.min(fvalues), 1:2, drop = F], col = "red", pch = 20)
+    #   points(DoE[which.min(predict(model, newdata = model@X, type = "UK")$mean), 1:2, drop = F], col = "orange", pch = 1)
+    # }
+    
+    if(model@n %% 10 == 9 && d == 2){
+      X_grid <- as.matrix(expand.grid(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                                      seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101)))
+      if(!highDimGP){
+        indin2 <- apply(X_grid, 1, testZ, pA = tA)
+        p_grid <- rep(NA, nrow(X_grid))
+        p_grid[indin2] <- predict(model, map(X_grid[indin2,], A_hat), type = "UK", checkNames = F)$mean
+        
+        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
+                       matrix(p_grid, 101), main = "Predictive mean",
+                       plot.axes = {axis(1); axis(2); points(ortProj(DoE * 2 - 1, tA), pch = 17, col = "blue");
+                         points(opt$par[1], opt$par[2], col = "red", pch = 20)})
+        Sys.sleep(2)
+        mhomtest <- mleHomGP(design, fvalues)
+        phomtest <- rep(NA, nrow(X_grid))
+        phomtest[indin2]  <- predict(mhomtest, map(X_grid[indin2,], A_hat))$mean
+        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
+                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
+                       matrix(phomtest, 101), main = "Predictive mean mlehomGP",
+                       plot.axes = {axis(1); axis(2); points(ortProj(DoE * 2 - 1, tA), pch = 17, col = "blue");
+                         points(opt$par[1], opt$par[2], col = "red", pch = 20)})
+      }
+    }
+    
+    ## Evaluate new design and update models
     
     newY <- fn(newX, ...)
+    if(newY < min(fvalues)) cat(model@n + 1, ": ", newY, "\n")
     
     fvalues <- c(fvalues, newY)
     DoE <- rbind(DoE, newX)
@@ -359,6 +447,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
     
     C_hat <- C_GP(modelD)
     A_hat <- eigen(C_hat$mat)$vectors[, 1:d, drop = F]
+    if(control$returnAS) ASs <- c(ASs, A_hat)
     
     # Adapt to change of A matrix
     ## Reverse mode only
@@ -403,43 +492,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
     # }
     
     
-    if(model@n %% 10 == 0){
-      print(model@n)
-      plot(modelD)
-    }
-    if(model@n %% 10 == 2 && d == 2){
-      X_grid <- as.matrix(expand.grid(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
-                                      seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101)))
-      EI_grid <- apply(X_grid, 1, EI_Rembo, model = model)
-      filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
-                     seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
-                     matrix(EI_grid, 101),
-                     plot.axes = { axis(1); axis(2); points(opt$par[1], opt$par[2], col = "blue", pch = 20) })
-    }
-    if(model@n %% 10 == 5){
-      print(model@n)
-      plot(model)
-    }
-    if(model@n %% 10 == 7){
-      plot(DoE[,1:2])
-      points(DoE[which.min(fvalues), 1:2, drop = F], col = "red", pch = 20)
-      points(DoE[which.min(predict(model, newdata = model@X, type = "UK")$mean), 1:2, drop = F], col = "orange", pch = 1)
-    }
     
-    if(model@n %% 10 == 9 && d == 2){
-      X_grid <- as.matrix(expand.grid(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
-                                      seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101)))
-      if(!highDimGP){
-        indin2 <- apply(X_grid, 1, testZ, pA = tA)
-        p_grid <- rep(NA, nrow(X_grid))
-        p_grid[indin2] <- predict(model, map(X_grid[indin2,], A_hat), type = "UK", checkNames = F)$mean
-        
-        filled.contour(seq(-boundsEIopt[1], boundsEIopt[1], length.out = 101),
-                       seq(-boundsEIopt[2], boundsEIopt[2], length.out = 101),
-                       matrix(p_grid, 101),
-                       plot.axes = { axis(1); axis(2); points(opt$par, col = "blue", pch = 20) })
-      } 
-    }
     
     if (typeof(newmodel) == "character") {
       cat("Unable to udpate kriging model at iteration", model@n - n.init, "- optimization stopped \n")
@@ -452,12 +505,13 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
                     low_dim_design = DoE,
                     y = fvalues,
                     A = A_hat,
-                    model = model)
+                    model = model,
+                    ASs = ASs)
       }
       return(res)
     }
     model <- newmodel
-    print(min(fvalues))
+    # print(min(fvalues))
   }
   
   if(control$lightreturn){
@@ -469,7 +523,8 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
                 y = fvalues,
                 A = A_hat,
                 model = model,
-                homMod = modelD)
+                homMod = modelD,
+                ASs = ASs)
   }
   
   return(res)
