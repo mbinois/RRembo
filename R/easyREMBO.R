@@ -78,7 +78,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
                       kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                       control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
                                      maxitOptA = 100, lightreturn = FALSE, warping = 'Psi', designtype = 'unif',
-                                     tcheckP = 1e-5, roll = F,
+                                     tcheckP = 1e-4, roll = F,
                                      inneroptim = "pso", popsize = 80, gen = 40),
                       init = NULL){
   # Initialisation
@@ -227,7 +227,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
     }
   }
-  
+  cat("Initial best value: ", min(fvalues))
   design <- map(DoE, A)
   
   model <- try(km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,
@@ -331,6 +331,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
     }else{
       newY <- fn(((randEmb(opt$par, A) +  1)/2) %*% diag(upper - lower) + lower, ...)
     }
+    if(newY < min(fvalues)) cat(model@n + 1, ": ", newY, "\n")
     
     newX <- opt$par
     newDesign <- map(opt$par, A)
@@ -372,7 +373,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       return(res)
     }
     model <- newmodel
-    print(min(fvalues))
+    # print(min(fvalues))
   }
   
   if(control$lightreturn){
