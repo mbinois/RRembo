@@ -9,6 +9,7 @@
 # #' @param NashSearch should the search for the optimum be a Nash equilibrium for EI vs AS criterion?
 # #' @param NashOptions list with parameters: \code{ns} the vector giving the number of strategies for EI and AS, respectively. 
 # #' Note: the maximum of EI is added by default.
+#' @param ASalternative alternate between AS criterion and EI
 #' @param useAScrit should an optimization on a sequential active subspace identification criterion be performed in the orthogonal? 
 #' @param kmcontrol an optional list of control parameters to be passed to the \code{\link[DiceKriging]{km}} model:
 #' \code{iso}, \code{covtype}, \code{formula}. In addition, boolean \code{codereestim} is passed to \code{\link[DiceKriging]{update.km}}
@@ -80,7 +81,7 @@
 #' plot(res - 0.397887, type = "b")
 #' boxplot(res - 0.397887)
 #' }
-activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit = FALSE, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
+activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit = FALSE, ASalternative = FALSE, #NashSearch = FALSE, NashOptions = list(ns = c(50, 2)), 
                         homcontrol = list(beta0 = 0, covtype = "Matern5_2", g = sqrt(.Machine$double.eps)),
                         kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula =~1),
                         control = list(Atype = 'isotropic', reverse = TRUE, bxsize = NULL, testU = TRUE, standard = FALSE,
@@ -140,7 +141,7 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
   DoE <- maximinLHS(n = n.init, k = D)
   
   fvalues <- apply(DoE, 1, fn, ...)
-  cat("Initial best value: ", min(fvalues))
+  cat("Initial best value: ", min(fvalues), "\n")
   
   library(hetGP)
   library(activegp)
@@ -356,6 +357,20 @@ activeREMBO <- function(par, fn, lower, upper, budget, ..., highDimGP, useAScrit
         # tmp <- try(testthat::expect_equal((newX * 2 - 1) %*% A_hat,  (newX2 * 2 - 1) %*% A_hat, tol = 1e-6))
         if(max(abs(((newX * 2 - 1) %*% A_hat) -  ((newX2 * 2 - 1) %*% A_hat))) <= 1e-2) newX <- newX2 # there are numerical problems on edges
       }
+      
+    }
+    
+    if(ASalternative && model@n %% 2 == 1 && (model@n + 1 < budget)){
+      af_D <- function(x, C){
+        if(is.null(nrow(x)))
+          x <- matrix(x, nrow = 1)
+        
+        res <- C_var(C, x, grad = FALSE)
+        return(res)
+      }
+      opt_af <- psoptim(par = rep(NA, D), fn = af_D, lower = lower, upper = upper, C = C_hat,
+                        control = list(fnscale = -1, maxit = control$gen, s = control$popsize, vectorize = F))
+      newX <- opt_af$par
       
     }
     
