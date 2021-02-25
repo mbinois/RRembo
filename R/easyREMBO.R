@@ -227,7 +227,7 @@ easyREMBO <- function(par, fn, lower, upper, budget, ...,
       if(length(fvalues) != nrow(DoE)) stop("Number of rows of design and length of response of provided designs do not match.")
     }
   }
-  cat("Initial best value: ", min(fvalues))
+  cat("Initial best value: ", min(fvalues), "\n")
   design <- map(DoE, A)
   
   model <- try(km(kmcontrol$formula, design = design, response = fvalues, covtype = kmcontrol$covtype, iso = kmcontrol$iso,

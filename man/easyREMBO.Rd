@@ -14,7 +14,7 @@ easyREMBO(
   kmcontrol = list(covtype = "matern5_2", iso = TRUE, covreestim = TRUE, formula = ~1),
   control = list(Atype = "isotropic", reverse = TRUE, bxsize = NULL, testU = TRUE,
     standard = FALSE, maxitOptA = 100, lightreturn = FALSE, warping = "Psi", designtype =
-    "unif", tcheckP = 1e-05, roll = F, inneroptim = "pso", popsize = 80, gen = 40),
+    "unif", tcheckP = 1e-04, roll = F, inneroptim = "pso", popsize = 80, gen = 40),
   init = NULL
 )
 }
