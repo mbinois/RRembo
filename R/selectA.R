@@ -1,45 +1,52 @@
-##' Select a random embedding matrix
-##' @param d small dimension
-##' @param D high dimension
-##' @param type method of random sampling of coefficients or selection procedure, one of
-##' \itemize{
-##' \item 'Gaussian' for standard Gaussian i.i.d. coefficients and orthonormalization
-##' \item 'isotropic' for a random matrix with equal row norms and orthonormal columns.
-##' It is obtained starting with a random Gaussian i.i.d. matrix,
-##' then alternating normalization of rows and orthonormalization of columns.
-##' \item 'optimized' for known optimal solutions (e.g., d = 2) or using a potential. 
-##' Considering each row as a point on the d-hypersphere, try to maximize the minimum distance between any two points.
-##' \item 'standard' for the original REMBO iid random matrix.
-##' }
-##' @param control list to be passed to \code{\link[stats]{optim}} in the \code{optimized} case (d > 2)
-##' @return randomly selected matrix with orthogonal columns and normalized rows (except for standard)
-##' @export
-##' @importFrom far orthonormalization
-##' @importFrom stats rnorm
-##' @author Mickael Binois
-##' @references M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.
-##' @examples
-##' ## Example of orthogonal projections
-##' d <- 2; D <- 6
-##' A1 <- selectA(d, D, type = 'Gaussian')
-##' A2 <- selectA(d, D, type = 'isotropic')
-##' A3 <- selectA(d, D, type = 'optimized')
-##'
-##' n <- 10000
-##' size <- 10
-##' Y <- size * (2 * matrix(runif(n * d), n) - 1)
-##'
-##' Z1 <- ortProj(randEmb(Y, A1), t(A1))
-##' Z2 <- ortProj(randEmb(Y, A2), t(A2))
-##' Z3 <- ortProj(randEmb(Y, A3), t(A3))
-##'
-##' par(mfrow = c(1, 3))
-##' plot(Z1, asp = 1)
-##' plot(Z2, asp = 1)
-##' plot(Z3, asp = 1)
-##'
-##' par(mfrow = c(1, 1))
-##'
+#' Select a random embedding matrix
+#' @param d small dimension
+#' @param D high dimension
+#' @param type method of random sampling of coefficients or selection procedure, one of
+#' \itemize{
+#' \item 'Gaussian' for standard Gaussian i.i.d. coefficients and orthonormalization
+#' \item 'isotropic' for a random matrix with equal row norms and orthonormal columns.
+#' It is obtained starting with a random Gaussian i.i.d. matrix,
+#' then alternating normalization of rows and orthonormalization of columns.
+#' \item 'optimized' for known optimal solutions (e.g., d = 2) or using a potential. 
+#' Considering each row as a point on the d-hypersphere, try to maximize the minimum distance between any two points.
+#' \item 'standard' for the original REMBO iid random matrix.
+#' \item 'hashing' for matrices with only one non zero value per row, that is randomly picked between -1 and 1.
+#' }
+#' @param control list to be passed to \code{\link[stats]{optim}} in the \code{optimized} case (d > 2)
+#' @return randomly selected matrix with orthogonal columns and normalized rows (except for standard)
+#' @export
+#' @importFrom far orthonormalization
+#' @importFrom stats rnorm
+#' @author Mickael Binois
+#' @references 
+#' M. Binois (2015), Uncertainty quantification on Pareto fronts and high-dimensional strategies in Bayesian optimization, with applications in multi-objective automotive design, PhD thesis, Mines Saint-Etienne.\cr
+#' 
+#' A. Nayebi, A. Munteanu, M. Poloczek (2019), A Framework for Bayesian Optimization in Embedded Subspaces, International Conference on Machine Learning, 4752-4761
+#' @examples
+#' ## Example of orthogonal projections
+#' d <- 2; D <- 6
+#' A1 <- selectA(d, D, type = 'Gaussian')
+#' A2 <- selectA(d, D, type = 'isotropic')
+#' A3 <- selectA(d, D, type = 'optimized')
+#' A4 <- selectA(d, D, type = 'hashing')
+#'
+#' n <- 10000
+#' size <- 10
+#' Y <- size * (2 * matrix(runif(n * d), n) - 1)
+#'
+#' Z1 <- ortProj(randEmb(Y, A1), t(A1))
+#' Z2 <- ortProj(randEmb(Y, A2), t(A2))
+#' Z3 <- ortProj(randEmb(Y, A3), t(A3))
+#' Z4 <- ortProj(randEmb(Y, A4), t(A4))
+#'
+#' par(mfrow = c(2, 2))
+#' plot(Z1, asp = 1)
+#' plot(Z2, asp = 1)
+#' plot(Z3, asp = 1)
+#' plot(Z4, asp = 1)
+#'
+#' par(mfrow = c(1, 1))
+#'
 selectA <- function(d, D, type = 'isotropic', control = list(n = 30, maxit = 100, maxit2 = 10)){
   if(is.null(control$n))
     control$n <- 10
@@ -74,21 +81,26 @@ selectA <- function(d, D, type = 'isotropic', control = list(n = 30, maxit = 100
       A <- orthonormalization(A, basis = FALSE)
     }
   }
+  
+  if(type == "hashing"){
+    A <- matrix(0, D, d)
+    A[cbind(1:D, sample(1:d, D, replace = T))] <- sample(c(-1,1), D, replace = TRUE)
+  }
   return(A)
 
 }
 
-##' Select a matrix A based on minimizing a potential function
-##' @title SelectA
-##' @param d embedding dimension
-##' @param D high dimension
-##' @param A optional starting matrix (d > 2)
-##' @param init_dir optional start vector direction (d = 2)
-##' @noRd
-##' @importFrom numDeriv grad
-##' @importFrom stats runif
-##' @importFrom stats optim
-##' @importFrom stats dist
+#' Select a matrix A based on minimizing a potential function
+#' @title SelectA
+#' @param d embedding dimension
+#' @param D high dimension
+#' @param A optional starting matrix (d > 2)
+#' @param init_dir optional start vector direction (d = 2)
+#' @noRd
+#' @importFrom numDeriv grad
+#' @importFrom stats runif
+#' @importFrom stats optim
+#' @importFrom stats dist
 selectA_II_Sphere <- function(d, D, A = NULL, init_dir = NULL, display = TRUE, maxit = 1000){
   if(d == 2){
     rr <- pi/D
