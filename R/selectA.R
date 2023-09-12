@@ -83,8 +83,14 @@ selectA <- function(d, D, type = 'isotropic', control = list(n = 30, maxit = 100
   }
   
   if(type == "hashing"){
-    A <- matrix(0, D, d)
-    A[cbind(1:D, sample(1:d, D, replace = T))] <- sample(c(-1,1), D, replace = TRUE)
+    nok <- TRUE
+    while(nok){
+      A <- matrix(0, D, d)
+      A[cbind(1:D, sample(1:d, D, replace = T))] <- sample(c(-1,1), D, replace = TRUE)
+      if(all(colSums(abs(A)) > 0))
+         nok <- FALSE
+    }
+
   }
   return(A)
 
